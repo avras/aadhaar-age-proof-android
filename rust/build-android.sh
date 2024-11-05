@@ -20,4 +20,4 @@ cargo ndk -o ../kotlin/app/src/main/jniLibs \
  
 # Create Kotlin bindings
 # For macOS, change extension of libageproof to dylib
-cargo run --bin uniffi-bindgen generate --library ./target/release/libageproof.so --language kotlin --out-dir ../kotlin/app/src/main/java/aadhaar/ageproof/rust
+cargo run --release --bin uniffi-bindgen generate --library ./target/release/libageproof.so --language kotlin --out-dir ../kotlin/app/src/main/java/aadhaar/ageproof/rust
