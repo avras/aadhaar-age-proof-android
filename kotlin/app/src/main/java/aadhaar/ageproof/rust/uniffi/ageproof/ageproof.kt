@@ -409,6 +409,8 @@ internal interface _UniFFILib : Library {
         }
     }
 
+    fun uniffi_ageproof_fn_func_generate_public_parameters(_uniffi_out_err: RustCallStatus): RustBuffer.ByValue
+
     fun uniffi_ageproof_fn_func_hello_world(_uniffi_out_err: RustCallStatus): RustBuffer.ByValue
 
     fun ffi_ageproof_rustbuffer_alloc(
@@ -616,6 +618,8 @@ internal interface _UniFFILib : Library {
         _uniffi_out_err: RustCallStatus,
     ): Unit
 
+    fun uniffi_ageproof_checksum_func_generate_public_parameters(): Short
+
     fun uniffi_ageproof_checksum_func_hello_world(): Short
 
     fun ffi_ageproof_uniffi_contract_version(): Int
@@ -633,6 +637,9 @@ private fun uniffiCheckContractApiVersion(lib: _UniFFILib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: _UniFFILib) {
+    if (lib.uniffi_ageproof_checksum_func_generate_public_parameters() != 2758.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_ageproof_checksum_func_hello_world() != 32745.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -698,6 +705,32 @@ public object FfiConverterString : FfiConverter<String, RustBuffer.ByValue> {
         buf.put(byteBuf)
     }
 }
+
+public object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
+    override fun read(buf: ByteBuffer): ByteArray {
+        val len = buf.getInt()
+        val byteArr = ByteArray(len)
+        buf.get(byteArr)
+        return byteArr
+    }
+
+    override fun allocationSize(value: ByteArray): Int = 4 + value.size
+
+    override fun write(
+        value: ByteArray,
+        buf: ByteBuffer,
+    ) {
+        buf.putInt(value.size)
+        buf.put(value)
+    }
+}
+
+fun `generatePublicParameters`(): ByteArray =
+    FfiConverterByteArray.lift(
+        rustCall { _status ->
+            _UniFFILib.INSTANCE.uniffi_ageproof_fn_func_generate_public_parameters(_status)
+        },
+    )
 
 fun `helloWorld`(): String =
     FfiConverterString.lift(

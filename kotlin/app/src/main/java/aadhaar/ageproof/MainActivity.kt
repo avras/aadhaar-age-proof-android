@@ -19,11 +19,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val greeting = helloWorld()
+        val ppSize = generatePublicParameters().size.toString()
         setContent {
             AadhaarAgeProofTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        greeting = greeting,
+                        greeting = buildString {
+                            append(greeting)
+                            append("\nPublic Parameters size = ")
+                            append(ppSize)
+                            append(" bytes")
+                        },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
