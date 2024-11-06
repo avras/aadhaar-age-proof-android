@@ -1,5 +1,5 @@
 [package]
-name = "rust"
+name = "nova-aadhaar-qr-mobile"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,4 +8,7 @@ crate-type = ["cdylib"]
 name = "ageproof"
 
 [dependencies]
+bincode = "1.3.3"
+nova-aadhaar-qr = { path = "../../nova-aadhaar-qr" }
+nova-snark = { git = "https://github.com/microsoft/Nova.git", default-features = false, rev = "ac8b057cd6fbc2aba7b2888a9b9c37fec9119d45" }
 uniffi = { version = "0.25.3", features = [ "cli" ] }
