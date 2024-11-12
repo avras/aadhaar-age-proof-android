@@ -20,28 +20,29 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val greeting = helloWorld()
-        val timeSource = TimeSource.Monotonic
-        val ppStartTime = timeSource.markNow()
-        val ppSizeInMB = (generatePublicParameters().size / (1024.0 * 1024.0)).toBigDecimal()
-            .setScale(2, RoundingMode.HALF_UP).toDouble()
-        val ppEndTime = timeSource.markNow()
-        val ppGenTime = ppEndTime - ppStartTime
+//        val greeting = helloWorld()
+//        val timeSource = TimeSource.Monotonic
+//        val ppStartTime = timeSource.markNow()
+//        val ppSizeInMB = (generatePublicParameters().size / (1024.0 * 1024.0)).toBigDecimal()
+//            .setScale(2, RoundingMode.HALF_UP).toDouble()
+//        val ppEndTime = timeSource.markNow()
+//        val ppGenTime = ppEndTime - ppStartTime
         setContent {
             AadhaarAgeProofTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        greeting = buildString {
-                            append(greeting)
-                            append("\nPublic Parameters size = ")
-                            append(ppSizeInMB)
-                            append(" MB\n")
-                            append("Time taken = ")
-                            append(ppGenTime.inWholeSeconds)
-                            append(" sec")
-                        },
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    MainScreen()
+//                    Greeting(
+//                        greeting = buildString {
+//                            append(greeting)
+//                            append("\nPublic Parameters size = ")
+//                            append(ppSizeInMB)
+//                            append(" MB\n")
+//                            append("Time taken = ")
+//                            append(ppGenTime.inWholeSeconds)
+//                            append(" sec")
+//                        },
+//                        modifier = Modifier.padding(innerPadding)
+//                    )
                 }
             }
         }
