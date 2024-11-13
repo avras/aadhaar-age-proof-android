@@ -22,11 +22,15 @@ import androidx.compose.ui.unit.dp
 fun HomeScreen(
     ageProofUiState: AgeProofUiState,
     generatePublicParameters: () -> Unit,
+    resetPublicParameters: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         if (ageProofUiState.ppGenerated) {
             Text("Public parameters generated")
+            Button(onClick = resetPublicParameters, modifier = modifier.fillMaxWidth()) {
+                Text("Reset Public Parameters")
+            }
         } else {
             if (ageProofUiState.ppGenerationInProgress) {
                 CircularProgressIndicator(
@@ -40,7 +44,6 @@ fun HomeScreen(
                 Button(onClick = generatePublicParameters, modifier = modifier.fillMaxWidth()) {
                     Text("Generate Parameters")
                 }
-
             }
         }
         if (ageProofUiState.publicParameters.isEmpty()) {
@@ -61,6 +64,7 @@ fun HomeScreenPreview() {
                 ppGenerationInProgress = false,
                 ppGenerated = false,
             ),
+            {},
             {},
             modifier = Modifier.padding(16.dp)
         )

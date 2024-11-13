@@ -6,5 +6,6 @@ import kotlinx.coroutines.flow.Flow
 interface AgeProofRepository {
     val outputWorkInfo: Flow<WorkInfo>
     fun generatePublicParameters()
+    fun resetPublicParameters()
     fun cancelPublicParameterGeneration()
 }

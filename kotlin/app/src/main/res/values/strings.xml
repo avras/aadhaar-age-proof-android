@@ -3,7 +3,9 @@
 
     <!-- Notification -->
     <string name="generating_public_parameters">Generating public parameters</string>
+    <string name="resetting_public_parameters">Resetting public parameters</string>
 
     <!-- Errors -->
     <string name="error_generating_public_parameters">Error during public parameter generation</string>
+    <string name="error_resetting_public_parameters">Error during public parameter reset</string>
 </resources>

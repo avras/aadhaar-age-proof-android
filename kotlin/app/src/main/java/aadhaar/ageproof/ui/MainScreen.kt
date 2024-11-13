@@ -154,6 +154,7 @@ fun MainScreen(
                 HomeScreen(
                     uiState,
                     ageProofViewModel::generatePublicParameters,
+                    ageProofViewModel::resetPublicParameters,
                     modifier = Modifier.padding(16.dp)
                 )
             }

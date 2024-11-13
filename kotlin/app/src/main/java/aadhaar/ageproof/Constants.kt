@@ -13,9 +13,14 @@ const val NOTIFICATION_ID = 1
 
 // Task names
 const val PUBLIC_PARAMETERS_GEN_WORK_NAME = "public_parameters_gen_work"
+const val PUBLIC_PARAMETERS_RESET_WORK_NAME = "public_parameters_reset_work"
+
+// Tags
+const val TAG_OUTPUT = "OUTPUT"
+const val TAG_RESET_PP = "RESET_PP"
+const val TAG_GEN_PP = "GEN_PP"
 
 // Keys
-const val TAG_OUTPUT = "OUTPUT"
 const val KEY_PUBLIC_PARAMS = "KEY_PUBLIC_PARAMS"
 
 // Delay for testing

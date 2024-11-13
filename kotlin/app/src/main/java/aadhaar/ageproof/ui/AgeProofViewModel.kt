@@ -2,6 +2,8 @@ package aadhaar.ageproof.ui
 
 import aadhaar.ageproof.AgeProofApplication
 import aadhaar.ageproof.KEY_PUBLIC_PARAMS
+import aadhaar.ageproof.TAG_GEN_PP
+import aadhaar.ageproof.TAG_RESET_PP
 import aadhaar.ageproof.data.AgeProofRepository
 import aadhaar.ageproof.data.AgeProofUiState
 import androidx.lifecycle.ViewModel
@@ -19,21 +21,46 @@ import kotlinx.coroutines.flow.stateIn
 class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : ViewModel() {
     val uiState: StateFlow<AgeProofUiState> = ageProofRepository.outputWorkInfo
         .map { info ->
-            val pp = info.outputData.getString(KEY_PUBLIC_PARAMS)
-            when {
-                info.state.isFinished && !pp.isNullOrEmpty() -> {
-                    AgeProofUiState(
-                        publicParameters = pp,
-                        ppGenerated = true,
-                        ppGenerationInProgress = false
-                    )
-                }
+            if (info.tags.contains(TAG_RESET_PP)) {
+                val pp = info.outputData.getString(KEY_PUBLIC_PARAMS)
+                when {
+                    info.state.isFinished && !pp.isNullOrEmpty() -> {
+                        AgeProofUiState(
+                            publicParameters = pp,
+                            ppGenerated = false,
+                            ppGenerationInProgress = false
+                        )
+                    }
 
-                info.state == WorkInfo.State.CANCELLED -> {
-                    AgeProofUiState()
+                    else -> {
+                        AgeProofUiState()
+                    }
                 }
+            } else if (info.tags.contains(TAG_GEN_PP)) {
+                val pp = info.outputData.getString(KEY_PUBLIC_PARAMS)
+                when {
+                    info.state.isFinished && !pp.isNullOrEmpty() -> {
+                        AgeProofUiState(
+                            publicParameters = pp,
+                            ppGenerated = true,
+                            ppGenerationInProgress = false
+                        )
+                    }
 
-                else -> AgeProofUiState(ppGenerationInProgress = true)
+                    info.state == WorkInfo.State.CANCELLED -> {
+                        AgeProofUiState()
+                    }
+
+                    info.state == WorkInfo.State.RUNNING -> {
+                        AgeProofUiState(ppGenerationInProgress = true)
+                    }
+
+                    else -> {
+                        AgeProofUiState()
+                    }
+                }
+            } else {
+                AgeProofUiState()
             }
         }.stateIn(
             scope = viewModelScope,
@@ -43,6 +70,10 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
 
     fun generatePublicParameters() {
         ageProofRepository.generatePublicParameters()
+    }
+
+    fun resetPublicParameters() {
+        ageProofRepository.resetPublicParameters()
     }
 
     fun cancelPublicParameterGeneration() {
