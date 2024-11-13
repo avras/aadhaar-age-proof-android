@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Aadhaar Age Proof</string>
+
+    <!-- Notification -->
+    <string name="generating_public_parameters">Generating public parameters</string>
+
+    <!-- Errors -->
+    <string name="error_generating_public_parameters">Error during public parameter generation</string>
 </resources>

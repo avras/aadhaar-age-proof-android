@@ -1,4 +1,4 @@
-package aadhaar.ageproof
+package aadhaar.ageproof.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
