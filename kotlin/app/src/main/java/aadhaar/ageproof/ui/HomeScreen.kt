@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +24,10 @@ fun HomeScreen(
     resetPublicParameters: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.fillMaxWidth(),
+    ) {
         if (ageProofUiState.ppGenerated) {
             Text("Public parameters generated")
             Button(onClick = resetPublicParameters, modifier = modifier.fillMaxWidth()) {
@@ -33,23 +35,19 @@ fun HomeScreen(
             }
         } else {
             if (ageProofUiState.ppGenerationInProgress) {
+                Text("Public parameters generation in progress")
+                Spacer(Modifier.height(16.dp))
                 CircularProgressIndicator(
-                    modifier = Modifier.width(64.dp),
                     color = MaterialTheme.colorScheme.secondary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
-                Spacer(modifier.height(8.dp))
-                Text("Public parameters generation in progress")
             } else {
                 Button(onClick = generatePublicParameters, modifier = modifier.fillMaxWidth()) {
                     Text("Generate Parameters")
                 }
             }
         }
-        if (ageProofUiState.publicParameters.isEmpty()) {
-            Text("Empty pp")
-
-        } else {
+        if (!ageProofUiState.publicParameters.isEmpty()) {
             Text("Current value = " + ageProofUiState.publicParameters)
         }
     }
@@ -61,7 +59,7 @@ fun HomeScreenPreview() {
     AadhaarAgeProofTheme {
         HomeScreen(
             ageProofUiState = AgeProofUiState(
-                ppGenerationInProgress = false,
+                ppGenerationInProgress = true,
                 ppGenerated = false,
             ),
             {},

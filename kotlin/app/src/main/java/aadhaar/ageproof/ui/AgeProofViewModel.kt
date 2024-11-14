@@ -1,9 +1,6 @@
 package aadhaar.ageproof.ui
 
 import aadhaar.ageproof.AgeProofApplication
-import aadhaar.ageproof.KEY_PUBLIC_PARAMS
-import aadhaar.ageproof.TAG_GEN_PP
-import aadhaar.ageproof.TAG_RESET_PP
 import aadhaar.ageproof.data.AgeProofRepository
 import aadhaar.ageproof.data.AgeProofUiState
 import androidx.lifecycle.ViewModel
@@ -12,73 +9,48 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.work.WorkInfo
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : ViewModel() {
-    val uiState: StateFlow<AgeProofUiState> = ageProofRepository.outputWorkInfo
-        .map { info ->
-            if (info.tags.contains(TAG_RESET_PP)) {
-                val pp = info.outputData.getString(KEY_PUBLIC_PARAMS)
-                when {
-                    info.state.isFinished && !pp.isNullOrEmpty() -> {
-                        AgeProofUiState(
-                            publicParameters = pp,
-                            ppGenerated = false,
-                            ppGenerationInProgress = false
-                        )
-                    }
-
-                    else -> {
-                        AgeProofUiState()
-                    }
-                }
-            } else if (info.tags.contains(TAG_GEN_PP)) {
-                val pp = info.outputData.getString(KEY_PUBLIC_PARAMS)
-                when {
-                    info.state.isFinished && !pp.isNullOrEmpty() -> {
-                        AgeProofUiState(
-                            publicParameters = pp,
-                            ppGenerated = true,
-                            ppGenerationInProgress = false
-                        )
-                    }
-
-                    info.state == WorkInfo.State.CANCELLED -> {
-                        AgeProofUiState()
-                    }
-
-                    info.state == WorkInfo.State.RUNNING -> {
-                        AgeProofUiState(ppGenerationInProgress = true)
-                    }
-
-                    else -> {
-                        AgeProofUiState()
-                    }
-                }
-            } else {
-                AgeProofUiState()
-            }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = AgeProofUiState()
-        )
+    private val _uiState = MutableStateFlow(AgeProofUiState())
+    val uiState: StateFlow<AgeProofUiState> = _uiState.asStateFlow()
 
     fun generatePublicParameters() {
-        ageProofRepository.generatePublicParameters()
+        _uiState.update { currentState ->
+            currentState.copy(
+                publicParameters = String(),
+                ppGenerated = false,
+                ppGenerationInProgress = true,
+            )
+        }
+
+        viewModelScope.launch {
+            val pp = ageProofRepository.generatePublicParameters()
+            _uiState.update { currentState ->
+                currentState.copy(
+                    publicParameters = pp,
+                    ppGenerated = true,
+                    ppGenerationInProgress = false,
+                )
+            }
+        }
     }
 
     fun resetPublicParameters() {
-        ageProofRepository.resetPublicParameters()
+        _uiState.update { currentState ->
+            currentState.copy(
+                publicParameters = "Reset public parameters".toString(),
+                ppGenerated = false,
+                ppGenerationInProgress = false,
+            )
+        }
+
     }
 
-    fun cancelPublicParameterGeneration() {
-        ageProofRepository.cancelPublicParameterGeneration()
-    }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
