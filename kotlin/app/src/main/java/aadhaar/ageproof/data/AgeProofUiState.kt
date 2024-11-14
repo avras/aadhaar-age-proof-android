@@ -8,4 +8,5 @@ data class AgeProofUiState(
     val ppGenerated: Boolean = false,
     val ppGenerationInProgress: Boolean = false,
     val ppGenerationTime: Duration = 0.seconds,
+    val qrCodeString: String? = null,
 )

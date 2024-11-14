@@ -8,4 +8,5 @@
     <!-- Errors -->
     <string name="error_generating_public_parameters">Error during public parameter generation</string>
     <string name="error_resetting_public_parameters">Error during public parameter reset</string>
+    <string name="select_code_form_device">Select QR Code Image</string>
 </resources>

@@ -2,10 +2,6 @@ package aadhaar.ageproof.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -18,7 +14,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,31 +25,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
-enum class AgeProofScreen(
-    val route: String,
-    val title: String,
-    val label: String,
-    val icon: ImageVector
-) {
-    Home(
-        route = "home_route",
-        title = "Aadhaar Age Proof",
-        label = "Home",
-        icon = Icons.Filled.Home,
-    ),
-    Prove(
-        route = "prove_route",
-        title = "Generate Proof",
-        label = "Prove",
-        icon = Icons.Filled.Edit,
-    ),
-    Verify(
-        route = "verify_route",
-        title = "Verify Proof",
-        label = "Verify",
-        icon = Icons.Filled.Check,
-    ),
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,7 +45,7 @@ fun AgeProofTopBar(
 fun AgeProofBottomNavigation(
     navController: NavController,
     currentDestination: NavDestination?,
-    bottomNavigationItems: List<AgeProofScreen>,
+    bottomNavigationItems: List<NavigationItem>,
 ) {
     NavigationBar {
         bottomNavigationItems.forEach { navigationItem ->
@@ -110,17 +80,19 @@ fun MainScreen(
 
 
     val bottomNavigationItems = listOf(
-        AgeProofScreen.Home,
-        AgeProofScreen.Prove,
-        AgeProofScreen.Verify,
+        NavigationItem.Home,
+        NavigationItem.Prove,
+        NavigationItem.Verify,
+        NavigationItem.Scan,
     )
 
     val currentTitle = when (currentDestination?.route) {
-        AgeProofScreen.Home.route -> AgeProofScreen.Home.title
-        AgeProofScreen.Prove.route -> AgeProofScreen.Prove.title
-        AgeProofScreen.Verify.route -> AgeProofScreen.Verify.title
+        NavigationItem.Home.route -> NavigationItem.Home.title
+        NavigationItem.Prove.route -> NavigationItem.Prove.title
+        NavigationItem.Verify.route -> NavigationItem.Verify.title
+        NavigationItem.Scan.route -> NavigationItem.Scan.title
         else -> {
-            AgeProofScreen.Home.title
+            NavigationItem.Home.title
         }
     }
 
@@ -142,21 +114,38 @@ fun MainScreen(
     { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = AgeProofScreen.Home.route,
+            startDestination = NavigationItem.Home.route,
             modifier = Modifier.padding(paddingValues = paddingValues)
         ) {
-            composable(AgeProofScreen.Home.route) {
+            composable(NavigationItem.Home.route) {
                 HomeScreen(
                     uiState,
                     ageProofViewModel::generatePublicParameters,
                     ageProofViewModel::resetPublicParameters,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
                 )
             }
-            composable(AgeProofScreen.Prove.route) {
-                ChildScreen("Prove")
+            composable(NavigationItem.Scan.route) {
+                ScanScreen(
+                    navController = navController,
+                    setQrCodeData = ageProofViewModel::setQrCodeData
+                )
             }
-            composable(AgeProofScreen.Verify.route) {
+            composable(NavigationItem.ImagePicker.route) {
+                ImagePicker(
+                    navController = navController,
+                    setQrCodeData = ageProofViewModel::setQrCodeData
+                )
+            }
+            composable(NavigationItem.Prove.route) {
+                ProveScreen(
+                    navController = navController,
+                    ageProofUiState = uiState,
+                    generatePublicParameters = ageProofViewModel::generatePublicParameters,
+                    modifier = Modifier.padding(16.dp),
+                )
+            }
+            composable(NavigationItem.Verify.route) {
                 ChildScreen("Verify")
             }
         }

@@ -17,7 +17,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
+    buildFeatures{
+        viewBinding = true
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -41,6 +43,8 @@ android {
 
 dependencies {
     implementation("net.java.dev.jna:jna:5.15.0@aar")
+    implementation(libs.zxing.core)
+    implementation(libs.zxing.android.embedded)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.core.ktx)

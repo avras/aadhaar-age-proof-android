@@ -59,6 +59,13 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
 
     }
 
+    fun setQrCodeData(qr: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                qrCodeString = qr
+            )
+        }
+    }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
