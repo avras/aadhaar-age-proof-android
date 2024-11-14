@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(AgeProofUiState())
@@ -22,19 +24,24 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
     fun generatePublicParameters() {
         _uiState.update { currentState ->
             currentState.copy(
-                publicParameters = String(),
+                publicParameters = byteArrayOf(),
                 ppGenerated = false,
                 ppGenerationInProgress = true,
+                ppGenerationTime = 0.seconds,
             )
         }
+        val timeSource = TimeSource.Monotonic
+        val ppStartTime = timeSource.markNow()
 
         viewModelScope.launch {
             val pp = ageProofRepository.generatePublicParameters()
+            val ppEndTime = timeSource.markNow()
             _uiState.update { currentState ->
                 currentState.copy(
                     publicParameters = pp,
                     ppGenerated = true,
                     ppGenerationInProgress = false,
+                    ppGenerationTime = ppEndTime - ppStartTime,
                 )
             }
         }
@@ -43,9 +50,10 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
     fun resetPublicParameters() {
         _uiState.update { currentState ->
             currentState.copy(
-                publicParameters = "Reset public parameters".toString(),
+                publicParameters = byteArrayOf(),
                 ppGenerated = false,
                 ppGenerationInProgress = false,
+                ppGenerationTime = 0.seconds,
             )
         }
 

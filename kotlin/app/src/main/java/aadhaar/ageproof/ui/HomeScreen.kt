@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import java.math.RoundingMode
 
 @Composable
 fun HomeScreen(
@@ -28,11 +29,23 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth(),
     ) {
+        Button(
+            onClick = generatePublicParameters,
+            enabled = !ageProofUiState.ppGenerationInProgress,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            Text("Generate Parameters")
+        }
         if (ageProofUiState.ppGenerated) {
-            Text("Public parameters generated")
             Button(onClick = resetPublicParameters, modifier = modifier.fillMaxWidth()) {
                 Text("Reset Public Parameters")
             }
+            Text("Public parameters generated in ${ageProofUiState.ppGenerationTime.inWholeSeconds} sec")
+
+            val ppSizeInMB =
+                (ageProofUiState.publicParameters.size / (1024.0 * 1024.0)).toBigDecimal()
+                    .setScale(2, RoundingMode.HALF_UP).toDouble()
+            Text("Parameters size = $ppSizeInMB")
         } else {
             if (ageProofUiState.ppGenerationInProgress) {
                 Text("Public parameters generation in progress")
@@ -41,14 +54,7 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.secondary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
-            } else {
-                Button(onClick = generatePublicParameters, modifier = modifier.fillMaxWidth()) {
-                    Text("Generate Parameters")
-                }
             }
-        }
-        if (!ageProofUiState.publicParameters.isEmpty()) {
-            Text("Current value = " + ageProofUiState.publicParameters)
         }
     }
 }

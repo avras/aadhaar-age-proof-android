@@ -1,5 +1,5 @@
 package aadhaar.ageproof.data
 
 interface AgeProofRepository {
-    suspend fun generatePublicParameters() : String
+    suspend fun generatePublicParameters() : ByteArray
 }

@@ -5,6 +5,6 @@ interface AppContainer {
 }
 
 class DefaultAppContainer() : AppContainer {
-    override val ageProofRepository = CoroutinesAgeProofRepository()
+    override val ageProofRepository = AgeProofRepositoryImpl()
 
 }
