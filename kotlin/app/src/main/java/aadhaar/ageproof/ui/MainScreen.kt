@@ -30,28 +30,30 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
-sealed class AgeProofScreen(
+enum class AgeProofScreen(
     val route: String,
     val title: String,
     val label: String,
+    val icon: ImageVector
 ) {
-    object Home : AgeProofScreen(
+    Home(
         route = "home_route",
         title = "Aadhaar Age Proof",
-        label = "Home"
-    )
-
-    object Prove : AgeProofScreen(
+        label = "Home",
+        icon = Icons.Filled.Home,
+    ),
+    Prove(
         route = "prove_route",
         title = "Generate Proof",
-        label = "Prove"
-    )
-
-    object Verify : AgeProofScreen(
+        label = "Prove",
+        icon = Icons.Filled.Edit,
+    ),
+    Verify(
         route = "verify_route",
         title = "Verify Proof",
-        label = "Verify"
-    )
+        label = "Verify",
+        icon = Icons.Filled.Check,
+    ),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,18 +75,18 @@ fun AgeProofTopBar(
 fun AgeProofBottomNavigation(
     navController: NavController,
     currentDestination: NavDestination?,
-    bottomNavigationItems: List<AgeProofNavigationItem>,
+    bottomNavigationItems: List<AgeProofScreen>,
 ) {
     NavigationBar {
         bottomNavigationItems.forEach { navigationItem ->
             NavigationBarItem(
-                selected = navigationItem.screen.route == currentDestination?.route,
-                label = { Text(navigationItem.screen.label) },
+                selected = navigationItem.route == currentDestination?.route,
+                label = { Text(navigationItem.label) },
                 icon = {
-                    Icon(navigationItem.icon, contentDescription = navigationItem.screen.label)
+                    Icon(navigationItem.icon, contentDescription = navigationItem.label)
                 },
                 onClick = {
-                    navController.navigate(navigationItem.screen.route) {
+                    navController.navigate(navigationItem.route) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }
@@ -97,13 +99,6 @@ fun AgeProofBottomNavigation(
     }
 }
 
-sealed class AgeProofNavigationItem(val screen: AgeProofScreen, val icon: ImageVector) {
-    object Home : AgeProofNavigationItem(AgeProofScreen.Home, Icons.Filled.Home)
-    object Prove : AgeProofNavigationItem(AgeProofScreen.Prove, Icons.Filled.Edit)
-    object Verify : AgeProofNavigationItem(AgeProofScreen.Verify, Icons.Filled.Check)
-}
-
-
 @Composable
 fun MainScreen(
     ageProofViewModel: AgeProofViewModel = viewModel(factory = AgeProofViewModel.Factory)
@@ -115,9 +110,9 @@ fun MainScreen(
 
 
     val bottomNavigationItems = listOf(
-        AgeProofNavigationItem.Home,
-        AgeProofNavigationItem.Prove,
-        AgeProofNavigationItem.Verify,
+        AgeProofScreen.Home,
+        AgeProofScreen.Prove,
+        AgeProofScreen.Verify,
     )
 
     val currentTitle = when (currentDestination?.route) {
