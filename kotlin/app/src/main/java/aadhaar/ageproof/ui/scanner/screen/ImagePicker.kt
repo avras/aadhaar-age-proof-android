@@ -1,17 +1,22 @@
-package aadhaar.ageproof.ui
+package aadhaar.ageproof.ui.scanner.screen
 
+import aadhaar.ageproof.findActivity
+import aadhaar.ageproof.ui.scanner.navhost.NavigationItem
+import android.app.Activity
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.google.zxing.BinaryBitmap
@@ -21,14 +26,11 @@ import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import java.io.FileNotFoundException
 
-
 @Composable
 fun ImagePicker(
     navController: NavController,
-    setQrCodeData: (String) -> Unit,
 ) {
     val context = LocalContext.current
-
     var imageUris by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -47,8 +49,13 @@ fun ImagePicker(
                     val reader = MultiFormatReader()
                     try {
                         val result = reader.decode(bBitmap)
-                        setQrCodeData(result.text.toString())
-                        navController.navigate(NavigationItem.Prove.route)
+                        Log.d("ImagePicker", "In ImagePicker")
+                        val resultText = result?.text
+                        var intent = Intent()
+                        intent.data = Uri.parse(resultText)
+                        val a = context.findActivity()
+                        a.setResult(Activity.RESULT_OK, intent)
+                        a.finish()
                     } catch (e: NotFoundException) {
                         Toast.makeText(context, "Invalid QR code", Toast.LENGTH_SHORT).show()
                         e.printStackTrace()

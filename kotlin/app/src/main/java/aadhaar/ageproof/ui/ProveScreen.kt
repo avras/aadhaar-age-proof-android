@@ -1,7 +1,11 @@
 package aadhaar.ageproof.ui
 
 import aadhaar.ageproof.data.AgeProofUiState
+import aadhaar.ageproof.ui.scanner.ScannerActivity
 import aadhaar.ageproof.ui.theme.AadhaarAgeProofTheme
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,19 +18,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+
 
 @Composable
 fun ProveScreen(
-    navController: NavController,
     ageProofUiState: AgeProofUiState,
     generatePublicParameters: () -> Unit,
     resetQrCode: () -> Unit,
+    setQrCodeData: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    // Create a launcher for starting the activity
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val intent = result.data
+        if (intent != null) {
+            val s = intent.dataString
+            if (s != null) {
+                setQrCodeData(s)
+            }
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth(),
@@ -34,8 +52,10 @@ fun ProveScreen(
         if (ageProofUiState.ppGenerated) {
             Button(
                 onClick = {
-                    resetQrCode()
-                    navController.navigate(NavigationItem.Scan.route)
+//                    resetQrCode()
+                    val intent = Intent(context, ScannerActivity::class.java)
+                    // Start the activity using the launcher
+                    launcher.launch(intent)
                 },
                 modifier = modifier.fillMaxWidth()
             ) {
@@ -65,16 +85,17 @@ fun ProveScreen(
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun ProveScreenPreview() {
     AadhaarAgeProofTheme {
         ProveScreen(
-            navController = rememberNavController(),
             ageProofUiState = AgeProofUiState(
                 ppGenerationInProgress = false,
                 ppGenerated = true,
             ),
+            {},
             {},
             {},
             modifier = Modifier.padding(16.dp)

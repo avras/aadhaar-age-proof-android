@@ -1,9 +1,13 @@
-package aadhaar.ageproof.ui
-
+package aadhaar.ageproof.ui.scanner.screen
 
 import aadhaar.ageproof.R
 import aadhaar.ageproof.databinding.BarcodeLayoutBinding
 import aadhaar.ageproof.findActivity
+import aadhaar.ageproof.ui.scanner.navhost.NavigationItem
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import android.view.View
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -31,12 +35,11 @@ import com.journeyapps.barcodescanner.camera.CameraSettings
 @Composable
 fun ScanScreen(
     navController: NavController,
-    setQrCodeData: (String) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.Companion,
 ) {
     Column(
         modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Companion.CenterHorizontally,
     ) {
         val context = LocalContext.current
         AndroidView(factory = {
@@ -53,10 +56,14 @@ fun ScanScreen(
             binding.barcodeView.decodeSingle(object : BarcodeCallback {
                 override fun barcodeResult(result: BarcodeResult?) {
                     beepManager.playBeepSound()
-                    val resultText = result?.result?.text ?: ""
-                    setQrCodeData(resultText)
+                    Log.d("ScanScreen", "In barcodeResult")
+                    val resultText = result?.result?.text
+                    var intent = Intent()
+                    intent.data = Uri.parse(resultText)
                     binding.barcodeView.pause()
-                    navController.navigate(NavigationItem.Prove.route)
+                    val a = context.findActivity()
+                    a.setResult(Activity.RESULT_OK, intent)
+                    a.finish()
                 }
 
                 override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {
@@ -64,9 +71,9 @@ fun ScanScreen(
                 }
             })
         })
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.Companion.height(8.dp))
         Text("OR")
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.Companion.height(8.dp))
         Button(onClick = {
             navController.navigate(NavigationItem.ImagePicker.route)
         }) {
@@ -74,7 +81,7 @@ fun ScanScreen(
                 painter = painterResource(id = R.drawable.ic_image),
                 contentDescription = null,
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.Companion.width(8.dp))
             Text(stringResource(R.string.select_code_form_device))
         }
     }

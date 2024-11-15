@@ -1,11 +1,9 @@
 package aadhaar.ageproof.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class NavigationItem(
@@ -32,17 +30,4 @@ enum class NavigationItem(
         label = "Verify",
         icon = Icons.Filled.Check,
     ),
-    Scan(
-        route = "scan_route",
-        title = "Scan QR Code",
-        label = "Scan",
-        icon = Icons.Filled.Build,
-    ),
-    ImagePicker(
-        route = "image_route",
-        title = "Choose QR Code Image",
-        label = "Choose Image",
-        icon = Icons.Filled.Person,
-    )
-
 }

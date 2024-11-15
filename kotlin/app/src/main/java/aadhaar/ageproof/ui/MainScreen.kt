@@ -47,32 +47,24 @@ fun AgeProofBottomNavigation(
     currentDestination: NavDestination?,
     bottomNavigationItems: List<NavigationItem>,
 ) {
-    if (currentDestination?.route in listOf<String>(
-            NavigationItem.Scan.route,
-            NavigationItem.ImagePicker.route
-        )
-    ) {
-        {}
-    } else {
-        NavigationBar {
-            bottomNavigationItems.forEach { navigationItem ->
-                NavigationBarItem(
-                    selected = navigationItem.route == currentDestination?.route,
-                    label = { Text(navigationItem.label) },
-                    icon = {
-                        Icon(navigationItem.icon, contentDescription = navigationItem.label)
-                    },
-                    onClick = {
-                        navController.navigate(navigationItem.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
+    NavigationBar {
+        bottomNavigationItems.forEach { navigationItem ->
+            NavigationBarItem(
+                selected = navigationItem.route == currentDestination?.route,
+                label = { Text(navigationItem.label) },
+                icon = {
+                    Icon(navigationItem.icon, contentDescription = navigationItem.label)
+                },
+                onClick = {
+                    navController.navigate(navigationItem.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
                         }
+                        launchSingleTop = true
+                        restoreState = true
                     }
-                )
-            }
+                }
+            )
         }
     }
 }
@@ -97,8 +89,6 @@ fun MainScreen(
         NavigationItem.Home.route -> NavigationItem.Home.title
         NavigationItem.Prove.route -> NavigationItem.Prove.title
         NavigationItem.Verify.route -> NavigationItem.Verify.title
-        NavigationItem.Scan.route -> NavigationItem.Scan.title
-        NavigationItem.ImagePicker.route -> NavigationItem.ImagePicker.title
         else -> {
             NavigationItem.Home.title
         }
@@ -133,25 +123,12 @@ fun MainScreen(
                     modifier = Modifier.padding(16.dp),
                 )
             }
-            composable(NavigationItem.Scan.route) {
-                ScanScreen(
-                    navController = navController,
-                    setQrCodeData = ageProofViewModel::setQrCodeData,
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
-            composable(NavigationItem.ImagePicker.route) {
-                ImagePicker(
-                    navController = navController,
-                    setQrCodeData = ageProofViewModel::setQrCodeData
-                )
-            }
             composable(NavigationItem.Prove.route) {
                 ProveScreen(
-                    navController = navController,
                     ageProofUiState = uiState,
                     generatePublicParameters = ageProofViewModel::generatePublicParameters,
                     resetQrCode = ageProofViewModel::resetQrCodeData,
+                    setQrCodeData = ageProofViewModel::setQrCodeData,
                     modifier = Modifier.padding(16.dp),
                 )
             }
