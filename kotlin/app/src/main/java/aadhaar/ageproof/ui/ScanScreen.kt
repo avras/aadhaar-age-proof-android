@@ -5,7 +5,6 @@ import aadhaar.ageproof.R
 import aadhaar.ageproof.databinding.BarcodeLayoutBinding
 import aadhaar.ageproof.findActivity
 import android.view.View
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,9 +32,11 @@ import com.journeyapps.barcodescanner.camera.CameraSettings
 fun ScanScreen(
     navController: NavController,
     setQrCodeData: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val context = LocalContext.current
         AndroidView(factory = {
@@ -54,12 +55,8 @@ fun ScanScreen(
                     beepManager.playBeepSound()
                     val resultText = result?.result?.text ?: ""
                     setQrCodeData(resultText)
-                    try {
-                        navController.navigate(NavigationItem.Prove.route)
-                        binding.barcodeView.pause()
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "Invalid code", Toast.LENGTH_SHORT).show()
-                    }
+                    binding.barcodeView.pause()
+                    navController.navigate(NavigationItem.Prove.route)
                 }
 
                 override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {

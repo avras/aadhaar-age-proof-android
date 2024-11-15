@@ -47,24 +47,32 @@ fun AgeProofBottomNavigation(
     currentDestination: NavDestination?,
     bottomNavigationItems: List<NavigationItem>,
 ) {
-    NavigationBar {
-        bottomNavigationItems.forEach { navigationItem ->
-            NavigationBarItem(
-                selected = navigationItem.route == currentDestination?.route,
-                label = { Text(navigationItem.label) },
-                icon = {
-                    Icon(navigationItem.icon, contentDescription = navigationItem.label)
-                },
-                onClick = {
-                    navController.navigate(navigationItem.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+    if (currentDestination?.route in listOf<String>(
+            NavigationItem.Scan.route,
+            NavigationItem.ImagePicker.route
+        )
+    ) {
+        {}
+    } else {
+        NavigationBar {
+            bottomNavigationItems.forEach { navigationItem ->
+                NavigationBarItem(
+                    selected = navigationItem.route == currentDestination?.route,
+                    label = { Text(navigationItem.label) },
+                    icon = {
+                        Icon(navigationItem.icon, contentDescription = navigationItem.label)
+                    },
+                    onClick = {
+                        navController.navigate(navigationItem.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -83,7 +91,6 @@ fun MainScreen(
         NavigationItem.Home,
         NavigationItem.Prove,
         NavigationItem.Verify,
-        NavigationItem.Scan,
     )
 
     val currentTitle = when (currentDestination?.route) {
@@ -91,6 +98,7 @@ fun MainScreen(
         NavigationItem.Prove.route -> NavigationItem.Prove.title
         NavigationItem.Verify.route -> NavigationItem.Verify.title
         NavigationItem.Scan.route -> NavigationItem.Scan.title
+        NavigationItem.ImagePicker.route -> NavigationItem.ImagePicker.title
         else -> {
             NavigationItem.Home.title
         }
@@ -128,7 +136,8 @@ fun MainScreen(
             composable(NavigationItem.Scan.route) {
                 ScanScreen(
                     navController = navController,
-                    setQrCodeData = ageProofViewModel::setQrCodeData
+                    setQrCodeData = ageProofViewModel::setQrCodeData,
+                    modifier = Modifier.padding(16.dp),
                 )
             }
             composable(NavigationItem.ImagePicker.route) {
@@ -142,6 +151,7 @@ fun MainScreen(
                     navController = navController,
                     ageProofUiState = uiState,
                     generatePublicParameters = ageProofViewModel::generatePublicParameters,
+                    resetQrCode = ageProofViewModel::resetQrCodeData,
                     modifier = Modifier.padding(16.dp),
                 )
             }

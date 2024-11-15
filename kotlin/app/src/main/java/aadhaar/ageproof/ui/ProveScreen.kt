@@ -24,6 +24,7 @@ fun ProveScreen(
     navController: NavController,
     ageProofUiState: AgeProofUiState,
     generatePublicParameters: () -> Unit,
+    resetQrCode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -32,7 +33,10 @@ fun ProveScreen(
     ) {
         if (ageProofUiState.ppGenerated) {
             Button(
-                onClick = { navController.navigate(NavigationItem.Scan.route) },
+                onClick = {
+                    resetQrCode()
+                    navController.navigate(NavigationItem.Scan.route)
+                },
                 modifier = modifier.fillMaxWidth()
             ) {
                 Text("Scan Aadhaar QR Code")
@@ -71,6 +75,7 @@ fun ProveScreenPreview() {
                 ppGenerationInProgress = false,
                 ppGenerated = true,
             ),
+            {},
             {},
             modifier = Modifier.padding(16.dp)
         )

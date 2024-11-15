@@ -1,6 +1,5 @@
 package aadhaar.ageproof.ui
 
-import aadhaar.ageproof.data.AgeProofUiState
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
@@ -49,9 +48,10 @@ fun ImagePicker(
                     try {
                         val result = reader.decode(bBitmap)
                         setQrCodeData(result.text.toString())
-                        navController.navigate("${NavigationItem.Prove.route}/${result.text}")
+                        navController.navigate(NavigationItem.Prove.route)
                     } catch (e: NotFoundException) {
                         Toast.makeText(context, "Invalid QR code", Toast.LENGTH_SHORT).show()
+                        e.printStackTrace()
                     }
 
                 } catch (e: FileNotFoundException) {
@@ -59,6 +59,8 @@ fun ImagePicker(
                 } catch (e: NullPointerException) {
                     e.printStackTrace()
                 }
+            } else {
+                navController.navigate(NavigationItem.Scan.route)
             }
             imageUris = uri
         }
