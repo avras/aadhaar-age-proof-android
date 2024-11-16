@@ -7,7 +7,6 @@ import aadhaar.ageproof.ui.scanner.navhost.NavigationItem
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import android.view.View
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -56,7 +55,6 @@ fun ScanScreen(
             binding.barcodeView.decodeSingle(object : BarcodeCallback {
                 override fun barcodeResult(result: BarcodeResult?) {
                     beepManager.playBeepSound()
-                    Log.d("ScanScreen", "In barcodeResult")
                     val resultText = result?.result?.text
                     var intent = Intent()
                     intent.data = Uri.parse(resultText)

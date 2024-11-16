@@ -3,6 +3,7 @@ package aadhaar.ageproof.ui
 import aadhaar.ageproof.AgeProofApplication
 import aadhaar.ageproof.data.AgeProofRepository
 import aadhaar.ageproof.data.AgeProofUiState
+import aadhaar.ageproof.data.QrCodeScanStatus
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -49,18 +50,6 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
         }
     }
 
-    fun resetPublicParameters() {
-        _uiState.update { currentState ->
-            currentState.copy(
-                publicParameters = byteArrayOf(),
-                ppGenerated = false,
-                ppGenerationInProgress = false,
-                ppGenerationTime = 0.seconds,
-            )
-        }
-
-    }
-
     fun generateProof() {
         _uiState.update { currentState ->
             currentState.copy(
@@ -76,7 +65,7 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
 
         viewModelScope.launch {
             val currentDate = dateString.toByteArray()
-            val proofValid = ageProofRepository.generateProof(
+            val proof = ageProofRepository.generateProof(
                 uiState.value.publicParameters,
                 uiState.value.qrCodeData,
                 currentDate
@@ -84,12 +73,23 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
             val proofEndTime = timeSource.markNow()
             _uiState.update { currentState ->
                 currentState.copy(
-                    proofValid = proofValid,
+                    proof = proof,
                     proofGenerated = true,
                     proofGenerationInProgress = false,
                     proofGenerationTime = proofEndTime - proofStartTime,
                 )
             }
+        }
+    }
+
+    fun resetProof() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                proofGenerated = false,
+                proofGenerationInProgress = false,
+                proofGenerationTime = 0.seconds,
+                proof = null,
+            )
         }
     }
 
@@ -99,6 +99,15 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
             currentState.copy(
                 qrCodeScanStatus = resultPair.first,
                 qrCodeData = resultPair.second ?: byteArrayOf(),
+            )
+        }
+    }
+
+    fun resetQrCodeBytes() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                qrCodeScanStatus = QrCodeScanStatus.NOT_SCANNED,
+                qrCodeData = byteArrayOf(),
             )
         }
     }

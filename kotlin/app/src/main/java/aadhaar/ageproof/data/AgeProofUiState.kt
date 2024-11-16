@@ -1,5 +1,6 @@
 package aadhaar.ageproof.data
 
+import uniffi.ageproof.AadhaarAgeProof
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -19,5 +20,5 @@ data class AgeProofUiState(
     val proofGenerated: Boolean = false,
     val proofGenerationInProgress: Boolean = false,
     val proofGenerationTime: Duration = 0.seconds,
-    val proofValid: Boolean = false,
+    val proof: AadhaarAgeProof? = null,
 )

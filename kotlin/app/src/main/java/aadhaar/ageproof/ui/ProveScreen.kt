@@ -30,7 +30,9 @@ fun ProveScreen(
     ageProofUiState: AgeProofUiState,
     generatePublicParameters: () -> Unit,
     setQrCodeBytes: (String) -> Unit,
+    resetQrCodeBytes: () -> Unit,
     generateProof: () -> Unit,
+    resetProof: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -51,28 +53,61 @@ fun ProveScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth(),
     ) {
-        if (ageProofUiState.ppGenerated) {
-            Button(
-                onClick = {
-                    val intent = Intent(context, ScannerActivity::class.java)
-                    // Start the activity using the launcher
-                    launcher.launch(intent)
-                },
-                enabled = !ageProofUiState.proofGenerationInProgress,
-                modifier = modifier.fillMaxWidth()
-            ) {
-                Text("Scan Aadhaar QR Code")
+        Button(
+            onClick = generatePublicParameters,
+            enabled = !ageProofUiState.ppGenerationInProgress && !ageProofUiState.ppGenerated,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            if (ageProofUiState.ppGenerated) {
+                Text("Public parameters generated")
+            } else {
+                Text("Generate Parameters")
             }
+        }
+
+        val scanButtonEnabled =
+            ageProofUiState.ppGenerated && !ageProofUiState.proofGenerationInProgress
+        Button(
+            onClick = {
+                resetQrCodeBytes()
+                resetProof()
+                val intent = Intent(context, ScannerActivity::class.java)
+                // Start the activity using the launcher
+                launcher.launch(intent)
+            },
+            enabled = scanButtonEnabled,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            if (ageProofUiState.qrCodeData.isEmpty()) {
+                Text("Scan Aadhaar QR code")
+            } else {
+                Text("Scan another Aadhaar QR code")
+            }
+        }
+
+        Button(
+            onClick = {
+                resetProof()
+                generateProof()
+            },
+            enabled = ageProofUiState.qrCodeData.isNotEmpty() && ageProofUiState.ppGenerated && !ageProofUiState.proofGenerationInProgress,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            Text("Generate Proof")
+        }
+        if (!ageProofUiState.ppGenerated) {
+            if (ageProofUiState.ppGenerationInProgress) {
+                Text("Public parameters generation in progress")
+                Spacer(Modifier.height(16.dp))
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            }
+        } else {
+            Text("Public parameters generated in ${ageProofUiState.ppGenerationTime.inWholeSeconds} sec")
             if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_SUCCESS) {
-                Text("Scanned QR code success")
-                Text("Bytes length = ${ageProofUiState.qrCodeData.size}")
-                Button(
-                    onClick = generateProof,
-                    enabled = !ageProofUiState.proofGenerationInProgress,
-                    modifier = modifier.fillMaxWidth()
-                ) {
-                    Text("Generate Proof")
-                }
+                Text("Aadhaar QR code scanned")
                 if (ageProofUiState.proofGenerationInProgress) {
                     Text("Proof generation in progress")
                     Spacer(Modifier.height(16.dp))
@@ -82,27 +117,18 @@ fun ProveScreen(
                     )
                 }
                 if (ageProofUiState.proofGenerated) {
-                    Text("Proof generated in ${ageProofUiState.proofGenerationTime.inWholeSeconds} sec")
+                    if (ageProofUiState.proof != null) {
+                        if (ageProofUiState.proof.success) {
+                            Text("Proof generated in ${ageProofUiState.proofGenerationTime.inWholeSeconds} sec")
+                        } else {
+                            Text("Proof generation failed", color = Color.Red)
+                            Text("Reason: ${ageProofUiState.proof.message}")
+                        }
+                    }
                 }
             } else if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_FAILURE) {
                 Text("Aadhaar QR code scan failed", color = Color.Red)
                 Text("Please try again", color = Color.Red)
-            }
-        } else {
-            Button(
-                onClick = generatePublicParameters,
-                enabled = !ageProofUiState.ppGenerationInProgress,
-                modifier = modifier.fillMaxWidth()
-            ) {
-                Text("Generate Parameters")
-            }
-            if (ageProofUiState.ppGenerationInProgress) {
-                Text("Public parameters generation in progress")
-                Spacer(Modifier.height(16.dp))
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.secondary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
             }
         }
     }
@@ -118,6 +144,8 @@ fun ProveScreenPreview() {
                 ppGenerationInProgress = false,
                 ppGenerated = true,
             ),
+            {},
+            {},
             {},
             {},
             {},

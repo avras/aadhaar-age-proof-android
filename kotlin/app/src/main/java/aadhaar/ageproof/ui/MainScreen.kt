@@ -80,18 +80,13 @@ fun MainScreen(
 
 
     val bottomNavigationItems = listOf(
-        NavigationItem.Home,
         NavigationItem.Prove,
         NavigationItem.Verify,
     )
 
     val currentTitle = when (currentDestination?.route) {
-        NavigationItem.Home.route -> NavigationItem.Home.title
-        NavigationItem.Prove.route -> NavigationItem.Prove.title
         NavigationItem.Verify.route -> NavigationItem.Verify.title
-        else -> {
-            NavigationItem.Home.title
-        }
+        else -> NavigationItem.Prove.title
     }
 
     Scaffold(
@@ -112,23 +107,17 @@ fun MainScreen(
     { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = NavigationItem.Home.route,
+            startDestination = NavigationItem.Prove.route,
             modifier = Modifier.padding(paddingValues = paddingValues)
         ) {
-            composable(NavigationItem.Home.route) {
-                HomeScreen(
-                    uiState,
-                    ageProofViewModel::generatePublicParameters,
-                    ageProofViewModel::resetPublicParameters,
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
             composable(NavigationItem.Prove.route) {
                 ProveScreen(
                     ageProofUiState = uiState,
                     generatePublicParameters = ageProofViewModel::generatePublicParameters,
                     setQrCodeBytes = ageProofViewModel::setQrCodeBytes,
+                    resetQrCodeBytes = ageProofViewModel::resetQrCodeBytes,
                     generateProof = ageProofViewModel::generateProof,
+                    resetProof = ageProofViewModel::resetProof,
                     modifier = Modifier.padding(16.dp),
                 )
             }

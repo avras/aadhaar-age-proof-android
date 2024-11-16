@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -32,6 +33,9 @@ class ScannerActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     ScannerNavHost(navController = rememberNavController())
+                }
+                BackHandler(true) {
+                    finish()
                 }
             }
         }

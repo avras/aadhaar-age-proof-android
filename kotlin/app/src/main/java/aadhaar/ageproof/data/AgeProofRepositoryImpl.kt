@@ -2,6 +2,7 @@ package aadhaar.ageproof.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import uniffi.ageproof.AadhaarAgeProof
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.math.BigInteger
@@ -19,7 +20,7 @@ class AgeProofRepositoryImpl() : AgeProofRepository {
         ppBytes: ByteArray,
         qrData: ByteArray,
         dateBytes: ByteArray
-    ): Boolean {
+    ): AadhaarAgeProof {
         return withContext(Dispatchers.Default) {
             uniffi.ageproof.generateProof(
                 ppBytes = ppBytes,

@@ -49,7 +49,6 @@ fun ImagePicker(
                     val reader = MultiFormatReader()
                     try {
                         val result = reader.decode(bBitmap)
-                        Log.d("ImagePicker", "In ImagePicker")
                         val resultText = result?.text
                         var intent = Intent()
                         intent.data = Uri.parse(resultText)

@@ -414,7 +414,7 @@ internal interface _UniFFILib : Library {
         `qrDataBytes`: RustBuffer.ByValue,
         `currentDateBytes`: RustBuffer.ByValue,
         _uniffi_out_err: RustCallStatus,
-    ): Byte
+    ): RustBuffer.ByValue
 
     fun uniffi_ageproof_fn_func_generate_public_parameters(_uniffi_out_err: RustCallStatus): RustBuffer.ByValue
 
@@ -642,7 +642,7 @@ private fun uniffiCheckContractApiVersion(lib: _UniFFILib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: _UniFFILib) {
-    if (lib.uniffi_ageproof_checksum_func_generate_proof() != 10940.toShort()) {
+    if (lib.uniffi_ageproof_checksum_func_generate_proof() != 33526.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_ageproof_checksum_func_generate_public_parameters() != 2758.toShort()) {
@@ -653,6 +653,23 @@ private fun uniffiCheckApiChecksums(lib: _UniFFILib) {
 // Async support
 
 // Public interface members begin here.
+
+public object FfiConverterUInt : FfiConverter<UInt, Int> {
+    override fun lift(value: Int): UInt = value.toUInt()
+
+    override fun read(buf: ByteBuffer): UInt = lift(buf.getInt())
+
+    override fun lower(value: UInt): Int = value.toInt()
+
+    override fun allocationSize(value: UInt) = 4
+
+    override fun write(
+        value: UInt,
+        buf: ByteBuffer,
+    ) {
+        buf.putInt(value.toInt())
+    }
+}
 
 public object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean = value.toInt() != 0
@@ -747,12 +764,61 @@ public object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     }
 }
 
+data class AadhaarAgeProof(
+    var `success`: Boolean,
+    var `message`: String,
+    var `version`: UInt,
+    var `ppHash`: String,
+    var `numSteps`: UInt,
+    var `currentDateDdmmyyyy`: String,
+    var `snarkProof`: String,
+) {
+    companion object
+}
+
+public object FfiConverterTypeAadhaarAgeProof : FfiConverterRustBuffer<AadhaarAgeProof> {
+    override fun read(buf: ByteBuffer): AadhaarAgeProof =
+        AadhaarAgeProof(
+            FfiConverterBoolean.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+
+    override fun allocationSize(value: AadhaarAgeProof) =
+        (
+            FfiConverterBoolean.allocationSize(value.`success`) +
+                FfiConverterString.allocationSize(value.`message`) +
+                FfiConverterUInt.allocationSize(value.`version`) +
+                FfiConverterString.allocationSize(value.`ppHash`) +
+                FfiConverterUInt.allocationSize(value.`numSteps`) +
+                FfiConverterString.allocationSize(value.`currentDateDdmmyyyy`) +
+                FfiConverterString.allocationSize(value.`snarkProof`)
+        )
+
+    override fun write(
+        value: AadhaarAgeProof,
+        buf: ByteBuffer,
+    ) {
+        FfiConverterBoolean.write(value.`success`, buf)
+        FfiConverterString.write(value.`message`, buf)
+        FfiConverterUInt.write(value.`version`, buf)
+        FfiConverterString.write(value.`ppHash`, buf)
+        FfiConverterUInt.write(value.`numSteps`, buf)
+        FfiConverterString.write(value.`currentDateDdmmyyyy`, buf)
+        FfiConverterString.write(value.`snarkProof`, buf)
+    }
+}
+
 fun `generateProof`(
     `ppBytes`: ByteArray,
     `qrDataBytes`: ByteArray,
     `currentDateBytes`: ByteArray,
-): Boolean =
-    FfiConverterBoolean.lift(
+): AadhaarAgeProof =
+    FfiConverterTypeAadhaarAgeProof.lift(
         rustCall { _status ->
             _UniFFILib.INSTANCE.uniffi_ageproof_fn_func_generate_proof(
                 FfiConverterByteArray.lower(`ppBytes`),

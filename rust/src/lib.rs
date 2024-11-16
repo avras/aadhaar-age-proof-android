@@ -38,21 +38,49 @@ fn generate_public_parameters() -> Vec<u8> {
     serialized_pp
 }
 
+#[derive(uniffi::Record)] 
+
+pub struct AadhaarAgeProof {
+    pub success: bool,
+    pub message: String,
+    pub version: u32,
+    pub pp_hash: String,
+    pub num_steps: u32,
+    pub current_date_ddmmyyyy: String, // Current date in DD-MM-YYYY format
+    pub snark_proof: String,
+}
+
 #[uniffi::export]
-fn generate_proof(pp_bytes: Vec<u8>, qr_data_bytes: Vec<u8>, current_date_bytes: Vec<u8>) -> bool {
-    if current_date_bytes.len() != DOB_LENGTH_BYTES
-    {
-        return false;
+fn generate_proof(pp_bytes: Vec<u8>, qr_data_bytes: Vec<u8>, current_date_bytes: Vec<u8>) -> AadhaarAgeProof {
+    let mut invalid_proof = AadhaarAgeProof {
+        success: false,
+        message: "Proof generation failed".to_string(),
+        version: 1,
+        pp_hash: String::new(),
+        num_steps: 0,
+        current_date_ddmmyyyy: String::new(),
+        snark_proof: String::new(),
+    };
+
+    if current_date_bytes.len() != DOB_LENGTH_BYTES {
+        invalid_proof.message = String::from("Date string invalid");
+        return invalid_proof;
     }
 
     let pp_bytes_vec = pp_bytes.to_vec();
     let res = bincode::deserialize(&pp_bytes_vec[..]);
     if res.is_err() {
-        return false
+        invalid_proof.message = String::from("Public parameters deserialization failed");
+        return invalid_proof;
     }
     let pp: PublicParams<E1, E2, C1, C2> = res.unwrap();
 
-    let aadhaar_qr_data = parse_aadhaar_qr_data(qr_data_bytes.to_vec()).unwrap();
+    let res = parse_aadhaar_qr_data(qr_data_bytes.to_vec());
+    if res.is_err() {
+        invalid_proof.message = String::from("QR Code parsing failed");
+        return invalid_proof;
+    }
+    let aadhaar_qr_data = res.unwrap();
     let primary_circuit_sequence = C1::new_state_sequence(&aadhaar_qr_data);
 
     let z0_primary = C1::calc_initial_primary_circuit_input(&current_date_bytes);
@@ -74,7 +102,8 @@ fn generate_proof(pp_bytes: Vec<u8>, qr_data_bytes: Vec<u8>, current_date_bytes:
     for (i, circuit_primary) in primary_circuit_sequence.iter().enumerate() {
         let res = recursive_snark.prove_step(&pp, circuit_primary, &circuit_secondary);
         if res.is_err() {
-            return false;
+            invalid_proof.message = String::from(format!("Recursive SNARK step {} failed", i));
+            return invalid_proof;
         }
         // assert!(res.is_ok());
     }
@@ -83,7 +112,8 @@ fn generate_proof(pp_bytes: Vec<u8>, qr_data_bytes: Vec<u8>, current_date_bytes:
     let num_steps = primary_circuit_sequence.len();
     let res = recursive_snark.verify(&pp, num_steps, &z0_primary, &z0_secondary);
     if res.is_err() {
-        return false;
+        invalid_proof.message = String::from("Recursive SNARK verification failed");
+        return invalid_proof;
     }
     // assert!(res.is_ok());
 
@@ -92,7 +122,8 @@ fn generate_proof(pp_bytes: Vec<u8>, qr_data_bytes: Vec<u8>, current_date_bytes:
 
     let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &pk, &recursive_snark);
     if res.is_err() {
-        return false;
+        invalid_proof.message = String::from("Compressed SNARK prove step failed");
+        return invalid_proof;
     }
     // assert!(res.is_ok());
 
@@ -105,13 +136,15 @@ fn generate_proof(pp_bytes: Vec<u8>, qr_data_bytes: Vec<u8>, current_date_bytes:
     let pp_hash_bytes: [u8; 32] = hasher.finalize().try_into().unwrap();
     let pp_hash = hex::encode(pp_hash_bytes);
 
-    // let nova_aadhaar_proof = AadhaarAgeProof {
-    // version: 1,
-    // pp_hash,
-    // num_steps,
-    // current_date_ddmmyyyy: String::from_utf8(current_date_bytes.to_vec()).unwrap(),
-    // snark_proof,
-    // };
+    let nova_aadhaar_proof = AadhaarAgeProof {
+        success: true,
+        message: "Proof generation succeeded".to_string(),
+        version: 1,
+        pp_hash,
+        num_steps: num_steps.try_into().unwrap(),
+        current_date_ddmmyyyy: String::from_utf8(current_date_bytes.to_vec()).unwrap(),
+        snark_proof,
+    };
 
-    return true;
+    return nova_aadhaar_proof;
 }
