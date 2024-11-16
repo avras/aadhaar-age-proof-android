@@ -409,9 +409,14 @@ internal interface _UniFFILib : Library {
         }
     }
 
-    fun uniffi_ageproof_fn_func_generate_public_parameters(_uniffi_out_err: RustCallStatus): RustBuffer.ByValue
+    fun uniffi_ageproof_fn_func_generate_proof(
+        `ppBytes`: RustBuffer.ByValue,
+        `qrDataBytes`: RustBuffer.ByValue,
+        `currentDateBytes`: RustBuffer.ByValue,
+        _uniffi_out_err: RustCallStatus,
+    ): Byte
 
-    fun uniffi_ageproof_fn_func_hello_world(_uniffi_out_err: RustCallStatus): RustBuffer.ByValue
+    fun uniffi_ageproof_fn_func_generate_public_parameters(_uniffi_out_err: RustCallStatus): RustBuffer.ByValue
 
     fun ffi_ageproof_rustbuffer_alloc(
         `size`: Int,
@@ -618,9 +623,9 @@ internal interface _UniFFILib : Library {
         _uniffi_out_err: RustCallStatus,
     ): Unit
 
-    fun uniffi_ageproof_checksum_func_generate_public_parameters(): Short
+    fun uniffi_ageproof_checksum_func_generate_proof(): Short
 
-    fun uniffi_ageproof_checksum_func_hello_world(): Short
+    fun uniffi_ageproof_checksum_func_generate_public_parameters(): Short
 
     fun ffi_ageproof_uniffi_contract_version(): Int
 }
@@ -637,10 +642,10 @@ private fun uniffiCheckContractApiVersion(lib: _UniFFILib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: _UniFFILib) {
-    if (lib.uniffi_ageproof_checksum_func_generate_public_parameters() != 2758.toShort()) {
+    if (lib.uniffi_ageproof_checksum_func_generate_proof() != 10940.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_ageproof_checksum_func_hello_world() != 32745.toShort()) {
+    if (lib.uniffi_ageproof_checksum_func_generate_public_parameters() != 2758.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -648,6 +653,23 @@ private fun uniffiCheckApiChecksums(lib: _UniFFILib) {
 // Async support
 
 // Public interface members begin here.
+
+public object FfiConverterBoolean : FfiConverter<Boolean, Byte> {
+    override fun lift(value: Byte): Boolean = value.toInt() != 0
+
+    override fun read(buf: ByteBuffer): Boolean = lift(buf.get())
+
+    override fun lower(value: Boolean): Byte = if (value) 1.toByte() else 0.toByte()
+
+    override fun allocationSize(value: Boolean) = 1
+
+    override fun write(
+        value: Boolean,
+        buf: ByteBuffer,
+    ) {
+        buf.put(lower(value))
+    }
+}
 
 public object FfiConverterString : FfiConverter<String, RustBuffer.ByValue> {
     // Note: we don't inherit from FfiConverterRustBuffer, because we use a
@@ -725,16 +747,25 @@ public object FfiConverterByteArray : FfiConverterRustBuffer<ByteArray> {
     }
 }
 
+fun `generateProof`(
+    `ppBytes`: ByteArray,
+    `qrDataBytes`: ByteArray,
+    `currentDateBytes`: ByteArray,
+): Boolean =
+    FfiConverterBoolean.lift(
+        rustCall { _status ->
+            _UniFFILib.INSTANCE.uniffi_ageproof_fn_func_generate_proof(
+                FfiConverterByteArray.lower(`ppBytes`),
+                FfiConverterByteArray.lower(`qrDataBytes`),
+                FfiConverterByteArray.lower(`currentDateBytes`),
+                _status,
+            )
+        },
+    )
+
 fun `generatePublicParameters`(): ByteArray =
     FfiConverterByteArray.lift(
         rustCall { _status ->
             _UniFFILib.INSTANCE.uniffi_ageproof_fn_func_generate_public_parameters(_status)
-        },
-    )
-
-fun `helloWorld`(): String =
-    FfiConverterString.lift(
-        rustCall { _status ->
-            _UniFFILib.INSTANCE.uniffi_ageproof_fn_func_hello_world(_status)
         },
     )

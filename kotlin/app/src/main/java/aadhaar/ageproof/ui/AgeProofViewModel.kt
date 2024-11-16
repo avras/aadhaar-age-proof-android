@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -59,18 +61,44 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
 
     }
 
-    fun setQrCodeData(qr: String) {
+    fun generateProof() {
         _uiState.update { currentState ->
             currentState.copy(
-                qrCodeString = qr
+                proofGenerated = false,
+                proofGenerationInProgress = true,
+                proofGenerationTime = 0.seconds,
             )
+        }
+        val timeSource = TimeSource.Monotonic
+        val proofStartTime = timeSource.markNow()
+        val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+        val dateString = LocalDateTime.now().format(formatter)
+
+        viewModelScope.launch {
+            val currentDate = dateString.toByteArray()
+            val proofValid = ageProofRepository.generateProof(
+                uiState.value.publicParameters,
+                uiState.value.qrCodeData,
+                currentDate
+            )
+            val proofEndTime = timeSource.markNow()
+            _uiState.update { currentState ->
+                currentState.copy(
+                    proofValid = proofValid,
+                    proofGenerated = true,
+                    proofGenerationInProgress = false,
+                    proofGenerationTime = proofEndTime - proofStartTime,
+                )
+            }
         }
     }
 
-    fun resetQrCodeData() {
+    fun setQrCodeBytes(qr: String) {
+        val resultPair = ageProofRepository.decodeQrCode(qr)
         _uiState.update { currentState ->
             currentState.copy(
-                qrCodeString = String()
+                qrCodeScanStatus = resultPair.first,
+                qrCodeData = resultPair.second ?: byteArrayOf(),
             )
         }
     }

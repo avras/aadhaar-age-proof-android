@@ -127,8 +127,8 @@ fun MainScreen(
                 ProveScreen(
                     ageProofUiState = uiState,
                     generatePublicParameters = ageProofViewModel::generatePublicParameters,
-                    resetQrCode = ageProofViewModel::resetQrCodeData,
-                    setQrCodeData = ageProofViewModel::setQrCodeData,
+                    setQrCodeBytes = ageProofViewModel::setQrCodeBytes,
+                    generateProof = ageProofViewModel::generateProof,
                     modifier = Modifier.padding(16.dp),
                 )
             }
