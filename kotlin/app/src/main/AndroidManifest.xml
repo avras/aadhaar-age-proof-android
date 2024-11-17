@@ -30,11 +30,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.scanner.ScannerActivity"
-            android:exported="true"
-            android:theme="@style/Theme.AadhaarAgeProof">
-        </activity>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="aadhaar.ageproof.fileprovider"
