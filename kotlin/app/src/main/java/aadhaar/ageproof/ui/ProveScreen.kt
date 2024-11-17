@@ -1,12 +1,10 @@
 package aadhaar.ageproof.ui
 
+import aadhaar.ageproof.R
 import aadhaar.ageproof.data.AgeProofUiState
 import aadhaar.ageproof.data.QrCodeScanStatus
-import aadhaar.ageproof.ui.scanner.ScannerActivity
 import aadhaar.ageproof.ui.theme.AadhaarAgeProofTheme
-import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,9 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.g00fy2.quickie.QRResult
+import io.github.g00fy2.quickie.ScanCustomCode
+import io.github.g00fy2.quickie.config.BarcodeFormat
+import io.github.g00fy2.quickie.config.ScannerConfig
 
 
 @Composable
@@ -35,16 +36,20 @@ fun ProveScreen(
     resetProof: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    // Create a launcher for starting the activity
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val intent = result.data
-        if (intent != null) {
-            val s = intent.dataString
-            if (s != null) {
-                setQrCodeBytes(s)
+    val scannerConfig = ScannerConfig.build {
+        setBarcodeFormats(listOf(BarcodeFormat.FORMAT_QR_CODE))
+        setOverlayStringRes(R.string.scan_aadhaar_qr_code)
+        setShowCloseButton(true)
+        setShowTorchToggle(true)
+    }
+    val scanQrCodeLauncher = rememberLauncherForActivityResult(ScanCustomCode()) { result ->
+        when (result) {
+            is QRResult.QRSuccess -> {
+                setQrCodeBytes(result.content.rawValue!!)
+            }
+
+            else -> {
+                setQrCodeBytes(String())
             }
         }
     }
@@ -71,9 +76,7 @@ fun ProveScreen(
             onClick = {
                 resetQrCodeBytes()
                 resetProof()
-                val intent = Intent(context, ScannerActivity::class.java)
-                // Start the activity using the launcher
-                launcher.launch(intent)
+                scanQrCodeLauncher.launch(scannerConfig)
             },
             enabled = scanButtonEnabled,
             modifier = modifier.fillMaxWidth()
