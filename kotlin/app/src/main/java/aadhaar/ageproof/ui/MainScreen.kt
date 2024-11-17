@@ -1,5 +1,6 @@
 package aadhaar.ageproof.ui
 
+import aadhaar.ageproof.R
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,6 +15,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -84,16 +86,11 @@ fun MainScreen(
         NavigationItem.Verify,
     )
 
-    val currentTitle = when (currentDestination?.route) {
-        NavigationItem.Verify.route -> NavigationItem.Verify.title
-        else -> NavigationItem.Prove.title
-    }
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             AgeProofTopBar(
-                title = currentTitle,
+                title = stringResource(R.string.main_screen_title),
             )
         },
         bottomBar = {
