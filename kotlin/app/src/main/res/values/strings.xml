@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Aadhaar Age Proof</string>
+    <string name="app_name">Age Proof</string>
     <string name="scan_aadhaar_qr_code">Scan Aadhaar QR Code</string>
     <string name="select_code_form_device">Select QR Code Image</string>
 </resources>
