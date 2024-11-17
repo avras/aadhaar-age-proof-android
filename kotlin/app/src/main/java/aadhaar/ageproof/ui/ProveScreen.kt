@@ -90,11 +90,14 @@ fun ProveScreen(
                         val resultText = result?.text ?: ""
                         setQrCodeBytes(resultText)
                     } catch (e: NotFoundException) {
+                        setQrCodeBytes(String())
                         e.printStackTrace()
                     }
                 } catch (e: FileNotFoundException) {
+                    setQrCodeBytes(String())
                     e.printStackTrace()
                 } catch (e: NullPointerException) {
+                    setQrCodeBytes(String())
                     e.printStackTrace()
                 }
             } else {
