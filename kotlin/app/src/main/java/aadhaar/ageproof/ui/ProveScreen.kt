@@ -4,6 +4,7 @@ import aadhaar.ageproof.R
 import aadhaar.ageproof.data.AgeProofUiState
 import aadhaar.ageproof.data.QrCodeScanStatus
 import aadhaar.ageproof.ui.theme.AadhaarAgeProofTheme
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,8 +48,10 @@ fun ProveScreen(
     generatePublicParameters: () -> Unit,
     setQrCodeBytes: (String) -> Unit,
     resetQrCodeBytes: () -> Unit,
-    generateProof: () -> Unit,
+    generateProof: (Context) -> Unit,
     resetProof: () -> Unit,
+    shareProof: (Context) -> Unit,
+    getProofJsonBytes: (Context) -> ByteArray,
     modifier: Modifier = Modifier,
 ) {
     val scannerConfig = ScannerConfig.build {
@@ -106,6 +109,16 @@ fun ProveScreen(
         }
     )
 
+    val saveFileLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("application/json"),
+            onResult = { uri: Uri? ->
+                uri?.let {
+                    context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                        outputStream.write(getProofJsonBytes(context))
+                    }
+                }
+            })
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth(),
@@ -161,12 +174,32 @@ fun ProveScreen(
         Button(
             onClick = {
                 resetProof()
-                generateProof()
+                generateProof(context)
             },
-            enabled = ageProofUiState.qrCodeData.isNotEmpty() && ageProofUiState.ppGenerated && !ageProofUiState.proofGenerationInProgress,
+            enabled = ageProofUiState.qrCodeData.isNotEmpty() &&
+                    ageProofUiState.ppGenerated &&
+                    !ageProofUiState.proofGenerationInProgress,
             modifier = modifier.fillMaxWidth()
         ) {
             Text("Generate Proof")
+        }
+        Button(
+            onClick = { saveFileLauncher.launch("aadhaar-age-proof.json") },
+            enabled = ageProofUiState.proof != null &&
+                    ageProofUiState.ppGenerated &&
+                    !ageProofUiState.proofGenerationInProgress,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            Text("Save Proof")
+        }
+        Button(
+            onClick = { shareProof(context) },
+            enabled = ageProofUiState.proof != null &&
+                    ageProofUiState.ppGenerated &&
+                    !ageProofUiState.proofGenerationInProgress,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            Text("Share Proof")
         }
         if (!ageProofUiState.ppGenerated) {
             if (ageProofUiState.ppGenerationInProgress) {
@@ -222,6 +255,8 @@ fun ProveScreenPreview() {
             {},
             {},
             {},
+            {},
+            { byteArrayOf() },
             modifier = Modifier.padding(16.dp)
         )
     }

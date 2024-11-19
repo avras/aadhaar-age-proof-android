@@ -115,6 +115,8 @@ fun MainScreen(
                     resetQrCodeBytes = ageProofViewModel::resetQrCodeBytes,
                     generateProof = ageProofViewModel::generateProof,
                     resetProof = ageProofViewModel::resetProof,
+                    shareProof = ageProofViewModel::shareProofJsonFile,
+                    getProofJsonBytes = ageProofViewModel::getProofJsonBytes,
                     modifier = Modifier.padding(16.dp),
                 )
             }
