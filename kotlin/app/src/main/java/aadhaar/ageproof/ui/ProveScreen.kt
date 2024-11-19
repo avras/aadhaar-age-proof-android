@@ -10,6 +10,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -120,9 +121,13 @@ fun ProveScreen(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier.fillMaxWidth(),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             val scanButtonEnabled = !ageProofUiState.proofGenerationInProgress
             Button(
                 onClick = {
@@ -194,42 +199,51 @@ fun ProveScreen(
             }
         }
 
-        if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_SUCCESS) {
-            Text("Aadhaar QR code scanned")
-            if (ageProofUiState.ppGenerated) {
-                Text("Public parameters generated in ${ageProofUiState.ppGenerationTime.inWholeSeconds} sec")
-                if (ageProofUiState.proofGenerationInProgress) {
-                    Text("Proof generation in progress")
-                    Spacer(Modifier.height(16.dp))
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.secondary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    )
-                }
-                else if (ageProofUiState.proofGenerated) {
-                    if (ageProofUiState.proof != null) {
-                        if (ageProofUiState.proof.success) {
-                            Text("Proof generated in ${ageProofUiState.proofGenerationTime.inWholeSeconds} sec")
-                        } else {
-                            Text("Proof generation failed", color = Color.Red)
-                            Text("Reason: ${ageProofUiState.proof.message}")
+        Spacer(modifier = Modifier.padding(vertical = 10.dp))
+        if (ageProofUiState.proofVerificationInProgress) {
+            Text("Proof verification in progress")
+            Spacer(Modifier.height(16.dp))
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+        } else {
+            if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_SUCCESS) {
+                Text("Aadhaar QR code scanned")
+                if (ageProofUiState.ppGenerated) {
+                    Text("Public parameters generated in ${ageProofUiState.ppGenerationTime.inWholeSeconds} sec")
+                    if (ageProofUiState.proofGenerationInProgress) {
+                        Text("Proof generation in progress")
+                        Spacer(Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.secondary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                    } else if (ageProofUiState.proofGenerated) {
+                        if (ageProofUiState.proof != null) {
+                            if (ageProofUiState.proof.success) {
+                                Text("Proof generated in ${ageProofUiState.proofGenerationTime.inWholeSeconds} sec")
+                            } else {
+                                Text("Proof generation failed", color = Color.Red)
+                                Text("Reason: ${ageProofUiState.proof.message}")
+                            }
                         }
                     }
+                } else {
+                    if (ageProofUiState.ppGenerationInProgress) {
+                        Text("Public parameters generation in progress")
+                        Spacer(Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.secondary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                    }
                 }
-            } else {
-                if (ageProofUiState.ppGenerationInProgress) {
-                    Text("Public parameters generation in progress")
-                    Spacer(Modifier.height(16.dp))
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.secondary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    )
-                }
-            }
 
-        } else if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_FAILURE) {
-            Text("Aadhaar QR code scan failed", color = Color.Red)
-            Text("Please try again", color = Color.Red)
+            } else if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_FAILURE) {
+                Text("Aadhaar QR code scan failed", color = Color.Red)
+                Text("Please try again", color = Color.Red)
+            }
         }
     }
 }

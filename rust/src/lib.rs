@@ -1,6 +1,6 @@
 use base64::{prelude::BASE64_STANDARD, Engine as Base64Engine};
 use nova_aadhaar_qr::{
-    circuit::AadhaarAgeProofCircuit,
+    circuit::{AadhaarAgeProofCircuit, OP_RSA_LAST},
     qr::{parse_aadhaar_qr_data, DOB_LENGTH_BYTES},
 };
 use nova_snark::{
@@ -39,7 +39,6 @@ fn generate_public_parameters() -> Vec<u8> {
 }
 
 #[derive(uniffi::Record)] 
-
 pub struct AadhaarAgeProof {
     pub success: bool,
     pub message: String,
@@ -147,4 +146,94 @@ fn generate_proof(pp_bytes: Vec<u8>, qr_data_bytes: Vec<u8>, current_date_bytes:
     };
 
     return nova_aadhaar_proof;
+}
+
+
+#[derive(uniffi::Record)] 
+pub struct AadhaarAgeVerifyResult {
+    pub success: bool,
+    pub message: String,
+    pub nullifier: String,
+}
+
+macro_rules! return_verify_error {
+    ($predicate:expr, $msg:literal) => {
+        if $predicate {
+            let result = AadhaarAgeVerifyResult {
+                success: false,
+                message: String::from($msg),
+                nullifier: String::new(),
+            };
+            return result;
+        }
+    };
+}
+
+#[uniffi::export]
+pub async fn verify_proof(pp_bytes: Vec<u8>, aadhaar_age_proof: AadhaarAgeProof) -> AadhaarAgeVerifyResult {
+    return_verify_error!(
+        aadhaar_age_proof.version != 1,
+        "Proof version is not the expected value of 1"
+    );
+
+    // Checking if hash of generated public parameters matches the hash in proof
+    let mut hasher = Sha256::new();
+    hasher.update(&pp_bytes);
+    let pp_hash_bytes: [u8; 32] = hasher.finalize().try_into().unwrap();
+    let pp_hash = hex::encode(pp_hash_bytes);
+    return_verify_error!(
+        aadhaar_age_proof.pp_hash != pp_hash,
+        "Public parameters hash did not match expected value."
+    );
+
+    // "Started deserialization of public parameters"
+    let res = bincode::deserialize(&pp_bytes[..]);
+    return_verify_error!(res.is_err(), "Public parameters deserialization failed.");
+    let pp: PublicParams<E1, E2, C1, C2> = res.unwrap();
+
+    let res = CompressedSNARK::<_, _, _, _, S1, S2>::setup(&pp);
+    return_verify_error!(res.is_err(), "Verifier key setup failed.");
+    let (_pk, vk) = res.unwrap();
+
+    // Verifying a CompressedSNARK
+
+    let current_date_bytes: [u8; DOB_LENGTH_BYTES] = aadhaar_age_proof
+        .current_date_ddmmyyyy
+        .as_bytes()
+        .try_into()
+        .unwrap();
+    let z0_primary = C1::calc_initial_primary_circuit_input(&current_date_bytes);
+    let z0_secondary = vec![<E2 as Engine>::Scalar::zero()];
+    let res = BASE64_STANDARD.decode(aadhaar_age_proof.snark_proof);
+    return_verify_error!(
+        res.is_err(),
+        "Base64 decoding of SNARK proof string failed."
+    );
+    let snark_proof_bytes: Vec<u8> = res.unwrap();
+    let res = bincode::deserialize(&snark_proof_bytes);
+    return_verify_error!(res.is_err(), "SNARK proof deserialization failed.");
+    let compressed_snark: CompressedSNARK<_, _, _, _, S1, S2> = res.unwrap();
+
+    let res = compressed_snark.verify(
+        &vk,
+        aadhaar_age_proof.num_steps.try_into().unwrap(),
+        &z0_primary,
+        &z0_secondary,
+    );
+    return_verify_error!(res.is_err(), "SNARK proof invalid.");
+
+    let final_outputs = res.unwrap().0;
+    let final_opcode = final_outputs[0];
+    return_verify_error!(
+        final_opcode != <E1 as Engine>::Scalar::from(OP_RSA_LAST + 1),
+        "Final opcode is incorrect."
+    );
+
+    let result = AadhaarAgeVerifyResult {
+        success: true,
+        message: String::from("Proof verification succeeded."),
+        nullifier: format!("{:?}", final_outputs[2]),
+    };
+
+    return result;
 }

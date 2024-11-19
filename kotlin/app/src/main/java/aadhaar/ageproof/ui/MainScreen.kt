@@ -120,7 +120,11 @@ fun MainScreen(
                 )
             }
             composable(NavigationItem.Verify.route) {
-                ChildScreen("Verify")
+                VerifyScreen(
+                    ageProofUiState = uiState,
+                    verifyProof = ageProofViewModel::verifyProof,
+                    modifier = Modifier.padding(16.dp),
+                )
             }
         }
 

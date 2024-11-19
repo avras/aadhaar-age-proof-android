@@ -24,11 +24,14 @@ import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
 import com.sun.jna.ptr.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.resume
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -405,6 +408,7 @@ internal interface _UniFFILib : Library {
                 .also { lib: _UniFFILib ->
                     uniffiCheckContractApiVersion(lib)
                     uniffiCheckApiChecksums(lib)
+                    uniffiRustFutureContinuationCallback.register(lib)
                 }
         }
     }
@@ -417,6 +421,11 @@ internal interface _UniFFILib : Library {
     ): RustBuffer.ByValue
 
     fun uniffi_ageproof_fn_func_generate_public_parameters(_uniffi_out_err: RustCallStatus): RustBuffer.ByValue
+
+    fun uniffi_ageproof_fn_func_verify_proof(
+        `ppBytes`: RustBuffer.ByValue,
+        `aadhaarAgeProof`: RustBuffer.ByValue,
+    ): Pointer
 
     fun ffi_ageproof_rustbuffer_alloc(
         `size`: Int,
@@ -627,6 +636,8 @@ internal interface _UniFFILib : Library {
 
     fun uniffi_ageproof_checksum_func_generate_public_parameters(): Short
 
+    fun uniffi_ageproof_checksum_func_verify_proof(): Short
+
     fun ffi_ageproof_uniffi_contract_version(): Int
 }
 
@@ -648,9 +659,59 @@ private fun uniffiCheckApiChecksums(lib: _UniFFILib) {
     if (lib.uniffi_ageproof_checksum_func_generate_public_parameters() != 2758.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_ageproof_checksum_func_verify_proof() != 31737.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
 }
 
 // Async support
+// Async return type handlers
+
+internal const val UNIFFI_RUST_FUTURE_POLL_READY = 0.toShort()
+internal const val UNIFFI_RUST_FUTURE_POLL_MAYBE_READY = 1.toShort()
+
+internal val uniffiContinuationHandleMap = UniFfiHandleMap<CancellableContinuation<Short>>()
+
+// FFI type for Rust future continuations
+internal object uniffiRustFutureContinuationCallback : UniFffiRustFutureContinuationCallbackType {
+    override fun callback(
+        continuationHandle: USize,
+        pollResult: Short,
+    ) {
+        uniffiContinuationHandleMap.remove(continuationHandle)?.resume(pollResult)
+    }
+
+    internal fun register(lib: _UniFFILib) {
+        lib.ffi_ageproof_rust_future_continuation_callback_set(this)
+    }
+}
+
+internal suspend fun <T, F, E : Exception> uniffiRustCallAsync(
+    rustFuture: Pointer,
+    pollFunc: (Pointer, USize) -> Unit,
+    completeFunc: (Pointer, RustCallStatus) -> F,
+    freeFunc: (Pointer) -> Unit,
+    liftFunc: (F) -> T,
+    errorHandler: CallStatusErrorHandler<E>,
+): T {
+    try {
+        do {
+            val pollResult =
+                suspendCancellableCoroutine<Short> { continuation ->
+                    pollFunc(
+                        rustFuture,
+                        uniffiContinuationHandleMap.insert(continuation),
+                    )
+                }
+        } while (pollResult != UNIFFI_RUST_FUTURE_POLL_READY)
+
+        return liftFunc(
+            rustCallWithError(errorHandler, { status -> completeFunc(rustFuture, status) }),
+        )
+    } finally {
+        freeFunc(rustFuture)
+    }
+}
 
 // Public interface members begin here.
 
@@ -813,6 +874,39 @@ public object FfiConverterTypeAadhaarAgeProof : FfiConverterRustBuffer<AadhaarAg
     }
 }
 
+data class AadhaarAgeVerifyResult(
+    var `success`: Boolean,
+    var `message`: String,
+    var `nullifier`: String,
+) {
+    companion object
+}
+
+public object FfiConverterTypeAadhaarAgeVerifyResult : FfiConverterRustBuffer<AadhaarAgeVerifyResult> {
+    override fun read(buf: ByteBuffer): AadhaarAgeVerifyResult =
+        AadhaarAgeVerifyResult(
+            FfiConverterBoolean.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+
+    override fun allocationSize(value: AadhaarAgeVerifyResult) =
+        (
+            FfiConverterBoolean.allocationSize(value.`success`) +
+                FfiConverterString.allocationSize(value.`message`) +
+                FfiConverterString.allocationSize(value.`nullifier`)
+        )
+
+    override fun write(
+        value: AadhaarAgeVerifyResult,
+        buf: ByteBuffer,
+    ) {
+        FfiConverterBoolean.write(value.`success`, buf)
+        FfiConverterString.write(value.`message`, buf)
+        FfiConverterString.write(value.`nullifier`, buf)
+    }
+}
+
 fun `generateProof`(
     `ppBytes`: ByteArray,
     `qrDataBytes`: ByteArray,
@@ -834,4 +928,23 @@ fun `generatePublicParameters`(): ByteArray =
         rustCall { _status ->
             _UniFFILib.INSTANCE.uniffi_ageproof_fn_func_generate_public_parameters(_status)
         },
+    )
+
+@Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+suspend fun `verifyProof`(
+    `ppBytes`: ByteArray,
+    `aadhaarAgeProof`: AadhaarAgeProof,
+): AadhaarAgeVerifyResult =
+    uniffiRustCallAsync(
+        _UniFFILib.INSTANCE.uniffi_ageproof_fn_func_verify_proof(
+            FfiConverterByteArray.lower(`ppBytes`),
+            FfiConverterTypeAadhaarAgeProof.lower(`aadhaarAgeProof`),
+        ),
+        { future, continuation -> _UniFFILib.INSTANCE.ffi_ageproof_rust_future_poll_rust_buffer(future, continuation) },
+        { future, continuation -> _UniFFILib.INSTANCE.ffi_ageproof_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> _UniFFILib.INSTANCE.ffi_ageproof_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeAadhaarAgeVerifyResult.lift(it) },
+        // Error FFI converter
+        NullCallStatusErrorHandler,
     )

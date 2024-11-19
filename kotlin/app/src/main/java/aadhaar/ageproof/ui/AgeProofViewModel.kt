@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import uniffi.ageproof.AadhaarAgeProof
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
@@ -81,6 +82,61 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
                 )
             }
             createProofJsonFile(context)
+        }
+    }
+
+    fun verifyProof() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                proofVerified = false,
+                proofVerificationInProgress = true,
+                proofVerificationTime = 0.seconds,
+            )
+        }
+        val timeSource = TimeSource.Monotonic
+        val ppStartTime = timeSource.markNow()
+
+        viewModelScope.launch {
+            if (!_uiState.value.ppGenerated) {
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        ppGenerationInProgress = true,
+                    )
+                }
+                val pp = ageProofRepository.generatePublicParameters()
+                val ppEndTime = timeSource.markNow()
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        publicParameters = pp,
+                        ppGenerated = true,
+                        ppGenerationInProgress = false,
+                        ppGenerationTime = ppEndTime - ppStartTime,
+                    )
+                }
+            }
+
+            val proofVerificationStartTime = timeSource.markNow()
+            val proofVerifyResult = ageProofRepository.verifyProof(
+                uiState.value.publicParameters,
+                uiState.value.proof ?: AadhaarAgeProof(
+                    success = false,
+                    message = "Proof is null".toString(),
+                    version = 1.toUInt(),
+                    ppHash = String(),
+                    numSteps = 0.toUInt(),
+                    currentDateDdmmyyyy = String(),
+                    snarkProof = String()
+                ),
+            )
+            val proofVerificationEndTime = timeSource.markNow()
+            _uiState.update { currentState ->
+                currentState.copy(
+                    verifyResult = proofVerifyResult,
+                    proofVerified = true,
+                    proofVerificationInProgress = false,
+                    proofVerificationTime = proofVerificationEndTime - proofVerificationStartTime,
+                )
+            }
         }
     }
 
