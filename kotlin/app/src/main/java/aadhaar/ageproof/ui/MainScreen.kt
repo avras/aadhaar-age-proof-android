@@ -110,7 +110,6 @@ fun MainScreen(
             composable(NavigationItem.Prove.route) {
                 ProveScreen(
                     ageProofUiState = uiState,
-                    generatePublicParameters = ageProofViewModel::generatePublicParameters,
                     setQrCodeBytes = ageProofViewModel::setQrCodeBytes,
                     resetQrCodeBytes = ageProofViewModel::resetQrCodeBytes,
                     generateProof = ageProofViewModel::generateProof,

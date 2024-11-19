@@ -45,7 +45,6 @@ import java.io.FileNotFoundException
 @Composable
 fun ProveScreen(
     ageProofUiState: AgeProofUiState,
-    generatePublicParameters: () -> Unit,
     setQrCodeBytes: (String) -> Unit,
     resetQrCodeBytes: () -> Unit,
     generateProof: (Context) -> Unit,
@@ -123,21 +122,8 @@ fun ProveScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Button(
-            onClick = generatePublicParameters,
-            enabled = !ageProofUiState.ppGenerationInProgress && !ageProofUiState.ppGenerated,
-            modifier = modifier.fillMaxWidth()
-        ) {
-            if (ageProofUiState.ppGenerated) {
-                Text("Public parameters generated")
-            } else {
-                Text("Generate Parameters")
-            }
-        }
-
-        Row {
-            val scanButtonEnabled =
-                ageProofUiState.ppGenerated && !ageProofUiState.proofGenerationInProgress
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val scanButtonEnabled = !ageProofUiState.proofGenerationInProgress
             Button(
                 onClick = {
                     resetQrCodeBytes()
@@ -150,10 +136,13 @@ fun ProveScreen(
                     painter = painterResource(id = R.drawable.ic_qrcode),
                     contentDescription = "Image icon",
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text("Scan QR code")
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                "or",
+                Modifier.padding(4.dp)
+            )
             Button(
                 onClick = {
                     resetQrCodeBytes()
@@ -166,7 +155,7 @@ fun ProveScreen(
                     painter = painterResource(id = R.drawable.ic_image),
                     contentDescription = "Image icon",
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text("Choose image")
             }
         }
@@ -177,43 +166,38 @@ fun ProveScreen(
                 generateProof(context)
             },
             enabled = ageProofUiState.qrCodeData.isNotEmpty() &&
-                    ageProofUiState.ppGenerated &&
+                    !ageProofUiState.ppGenerationInProgress &&
                     !ageProofUiState.proofGenerationInProgress,
-            modifier = modifier.fillMaxWidth()
         ) {
             Text("Generate Proof")
         }
-        Button(
-            onClick = { saveFileLauncher.launch("aadhaar-age-proof.json") },
-            enabled = ageProofUiState.proof != null &&
-                    ageProofUiState.ppGenerated &&
-                    !ageProofUiState.proofGenerationInProgress,
-            modifier = modifier.fillMaxWidth()
-        ) {
-            Text("Save Proof")
-        }
-        Button(
-            onClick = { shareProof(context) },
-            enabled = ageProofUiState.proof != null &&
-                    ageProofUiState.ppGenerated &&
-                    !ageProofUiState.proofGenerationInProgress,
-            modifier = modifier.fillMaxWidth()
-        ) {
-            Text("Share Proof")
-        }
-        if (!ageProofUiState.ppGenerated) {
-            if (ageProofUiState.ppGenerationInProgress) {
-                Text("Public parameters generation in progress")
-                Spacer(Modifier.height(16.dp))
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.secondary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Button(
+                onClick = { saveFileLauncher.launch("aadhaar-age-proof.json") },
+                enabled = ageProofUiState.proof != null &&
+                        ageProofUiState.ppGenerated &&
+                        !ageProofUiState.proofGenerationInProgress,
+            ) {
+                Text("Save Proof")
             }
-        } else {
-            Text("Public parameters generated in ${ageProofUiState.ppGenerationTime.inWholeSeconds} sec")
-            if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_SUCCESS) {
-                Text("Aadhaar QR code scanned")
+            Text(
+                "or",
+                Modifier.padding(8.dp)
+            )
+            Button(
+                onClick = { shareProof(context) },
+                enabled = ageProofUiState.proof != null &&
+                        ageProofUiState.ppGenerated &&
+                        !ageProofUiState.proofGenerationInProgress,
+            ) {
+                Text("Share Proof")
+            }
+        }
+
+        if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_SUCCESS) {
+            Text("Aadhaar QR code scanned")
+            if (ageProofUiState.ppGenerated) {
+                Text("Public parameters generated in ${ageProofUiState.ppGenerationTime.inWholeSeconds} sec")
                 if (ageProofUiState.proofGenerationInProgress) {
                     Text("Proof generation in progress")
                     Spacer(Modifier.height(16.dp))
@@ -222,7 +206,7 @@ fun ProveScreen(
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     )
                 }
-                if (ageProofUiState.proofGenerated) {
+                else if (ageProofUiState.proofGenerated) {
                     if (ageProofUiState.proof != null) {
                         if (ageProofUiState.proof.success) {
                             Text("Proof generated in ${ageProofUiState.proofGenerationTime.inWholeSeconds} sec")
@@ -232,14 +216,23 @@ fun ProveScreen(
                         }
                     }
                 }
-            } else if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_FAILURE) {
-                Text("Aadhaar QR code scan failed", color = Color.Red)
-                Text("Please try again", color = Color.Red)
+            } else {
+                if (ageProofUiState.ppGenerationInProgress) {
+                    Text("Public parameters generation in progress")
+                    Spacer(Modifier.height(16.dp))
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.secondary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    )
+                }
             }
+
+        } else if (ageProofUiState.qrCodeScanStatus == QrCodeScanStatus.SCAN_FAILURE) {
+            Text("Aadhaar QR code scan failed", color = Color.Red)
+            Text("Please try again", color = Color.Red)
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
@@ -250,7 +243,6 @@ fun ProveScreenPreview() {
                 ppGenerationInProgress = false,
                 ppGenerated = true,
             ),
-            {},
             {},
             {},
             {},

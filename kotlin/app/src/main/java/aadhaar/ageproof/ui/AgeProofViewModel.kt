@@ -32,32 +32,6 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
     private val _uiState = MutableStateFlow(AgeProofUiState())
     val uiState: StateFlow<AgeProofUiState> = _uiState.asStateFlow()
 
-    fun generatePublicParameters() {
-        _uiState.update { currentState ->
-            currentState.copy(
-                publicParameters = byteArrayOf(),
-                ppGenerated = false,
-                ppGenerationInProgress = true,
-                ppGenerationTime = 0.seconds,
-            )
-        }
-        val timeSource = TimeSource.Monotonic
-        val ppStartTime = timeSource.markNow()
-
-        viewModelScope.launch {
-            val pp = ageProofRepository.generatePublicParameters()
-            val ppEndTime = timeSource.markNow()
-            _uiState.update { currentState ->
-                currentState.copy(
-                    publicParameters = pp,
-                    ppGenerated = true,
-                    ppGenerationInProgress = false,
-                    ppGenerationTime = ppEndTime - ppStartTime,
-                )
-            }
-        }
-    }
-
     fun generateProof(context: Context) {
         _uiState.update { currentState ->
             currentState.copy(
@@ -67,11 +41,30 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
             )
         }
         val timeSource = TimeSource.Monotonic
-        val proofStartTime = timeSource.markNow()
+        val ppStartTime = timeSource.markNow()
         val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
         val dateString = LocalDateTime.now().format(formatter)
 
         viewModelScope.launch {
+            if (!_uiState.value.ppGenerated) {
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        ppGenerationInProgress = true,
+                    )
+                }
+                val pp = ageProofRepository.generatePublicParameters()
+                val ppEndTime = timeSource.markNow()
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        publicParameters = pp,
+                        ppGenerated = true,
+                        ppGenerationInProgress = false,
+                        ppGenerationTime = ppEndTime - ppStartTime,
+                    )
+                }
+            }
+
+            val proofStartTime = timeSource.markNow()
             val currentDate = dateString.toByteArray()
             val proof = ageProofRepository.generateProof(
                 uiState.value.publicParameters,
