@@ -190,6 +190,11 @@ fun ProveScreen(
                         !ageProofUiState.proofGenerationInProgress &&
                         !ageProofUiState.proofVerificationInProgress,
             ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_download),
+                    contentDescription = "Download icon",
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text("Save Proof")
             }
             Text(
@@ -203,6 +208,11 @@ fun ProveScreen(
                         !ageProofUiState.proofGenerationInProgress &&
                         !ageProofUiState.proofVerificationInProgress,
             ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_share),
+                    contentDescription = "Share icon",
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text("Share Proof")
             }
         }

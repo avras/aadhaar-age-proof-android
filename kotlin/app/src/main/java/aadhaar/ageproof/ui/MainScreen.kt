@@ -15,6 +15,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,7 +56,10 @@ fun AgeProofBottomNavigation(
                 selected = navigationItem.route == currentDestination?.route,
                 label = { Text(navigationItem.label) },
                 icon = {
-                    Icon(navigationItem.icon, contentDescription = navigationItem.label)
+                    Icon(
+                        painter = painterResource(navigationItem.id),
+                        contentDescription = navigationItem.label
+                    )
                 },
                 onClick = {
                     navController.navigate(navigationItem.route) {
