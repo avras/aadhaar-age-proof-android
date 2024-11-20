@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.gson.Gson
 import uniffi.ageproof.AadhaarAgeProof
@@ -37,7 +40,9 @@ fun VerifyScreen(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
     ) {
         val context = LocalContext.current
         val proofFileChooserLauncher = rememberLauncherForActivityResult(
@@ -101,6 +106,11 @@ fun VerifyScreen(
                 if (ageProofUiState.verifyResult != null) {
                     if (ageProofUiState.verifyResult.success) {
                         Text("Proof verified in ${ageProofUiState.proofVerificationTime.inWholeSeconds} sec")
+                        Text(
+                            "Nullifier: ${ageProofUiState.verifyResult.nullifier} ",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     } else {
                         Text("Proof verification failed", color = Color.Red)
                         Text("Reason: ${ageProofUiState.verifyResult.message}")
