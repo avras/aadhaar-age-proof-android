@@ -75,7 +75,7 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
             val proofEndTime = timeSource.markNow()
             _uiState.update { currentState ->
                 currentState.copy(
-                    proof = proof,
+                    generatedProof = proof,
                     proofGenerated = true,
                     proofGenerationInProgress = false,
                     proofGenerationTime = proofEndTime - proofStartTime,
@@ -118,7 +118,7 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
             val proofVerificationStartTime = timeSource.markNow()
             val proofVerifyResult = ageProofRepository.verifyProof(
                 uiState.value.publicParameters,
-                uiState.value.proof ?: AadhaarAgeProof(
+                uiState.value.receivedProof ?: AadhaarAgeProof(
                     success = false,
                     message = "Proof is null".toString(),
                     version = 1.toUInt(),
@@ -140,13 +140,32 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
         }
     }
 
-    fun resetProof() {
+    fun setProof(proof: AadhaarAgeProof?) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                proofReadFromFile = proof != null,
+                receivedProof = proof,
+            )
+        }
+    }
+
+    fun resetGeneratedProof() {
         _uiState.update { currentState ->
             currentState.copy(
                 proofGenerated = false,
                 proofGenerationInProgress = false,
                 proofGenerationTime = 0.seconds,
-                proof = null,
+                generatedProof = null,
+            )
+        }
+    }
+    fun resetReceivedProof() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                proofVerified = false,
+                proofVerificationInProgress = false,
+                proofVerificationTime = 0.seconds,
+                receivedProof = null,
             )
         }
     }
@@ -172,7 +191,7 @@ class AgeProofViewModel(private val ageProofRepository: AgeProofRepository) : Vi
 
     private fun createProofJsonFile(context: Context) {
         var proofJsonFile = File(context.filesDir, "aadhaar-age-proof.json")
-        val proof = _uiState.value.proof
+        val proof = _uiState.value.generatedProof
         if (proof != null) {
             try {
                 val writer = JsonWriter(FileWriter(proofJsonFile))

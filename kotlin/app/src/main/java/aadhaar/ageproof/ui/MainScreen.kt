@@ -113,7 +113,7 @@ fun MainScreen(
                     setQrCodeBytes = ageProofViewModel::setQrCodeBytes,
                     resetQrCodeBytes = ageProofViewModel::resetQrCodeBytes,
                     generateProof = ageProofViewModel::generateProof,
-                    resetProof = ageProofViewModel::resetProof,
+                    resetProof = ageProofViewModel::resetGeneratedProof,
                     shareProof = ageProofViewModel::shareProofJsonFile,
                     getProofJsonBytes = ageProofViewModel::getProofJsonBytes,
                     modifier = Modifier.padding(16.dp),
@@ -122,6 +122,8 @@ fun MainScreen(
             composable(NavigationItem.Verify.route) {
                 VerifyScreen(
                     ageProofUiState = uiState,
+                    setProof = ageProofViewModel::setProof,
+                    resetReceivedProof = ageProofViewModel::resetReceivedProof,
                     verifyProof = ageProofViewModel::verifyProof,
                     modifier = Modifier.padding(16.dp),
                 )

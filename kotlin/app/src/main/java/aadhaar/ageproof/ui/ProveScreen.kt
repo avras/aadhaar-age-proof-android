@@ -128,7 +128,8 @@ fun ProveScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            val scanButtonEnabled = !ageProofUiState.proofGenerationInProgress
+            val scanButtonEnabled = !ageProofUiState.proofGenerationInProgress &&
+                    !ageProofUiState.proofVerificationInProgress
             Button(
                 onClick = {
                     resetQrCodeBytes()
@@ -172,16 +173,18 @@ fun ProveScreen(
             },
             enabled = ageProofUiState.qrCodeData.isNotEmpty() &&
                     !ageProofUiState.ppGenerationInProgress &&
-                    !ageProofUiState.proofGenerationInProgress,
+                    !ageProofUiState.proofGenerationInProgress &&
+                    !ageProofUiState.proofVerificationInProgress,
         ) {
             Text("Generate Proof")
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(
                 onClick = { saveFileLauncher.launch("aadhaar-age-proof.json") },
-                enabled = ageProofUiState.proof != null &&
+                enabled = ageProofUiState.generatedProof != null &&
                         ageProofUiState.ppGenerated &&
-                        !ageProofUiState.proofGenerationInProgress,
+                        !ageProofUiState.proofGenerationInProgress &&
+                        !ageProofUiState.proofVerificationInProgress,
             ) {
                 Text("Save Proof")
             }
@@ -191,9 +194,10 @@ fun ProveScreen(
             )
             Button(
                 onClick = { shareProof(context) },
-                enabled = ageProofUiState.proof != null &&
+                enabled = ageProofUiState.generatedProof != null &&
                         ageProofUiState.ppGenerated &&
-                        !ageProofUiState.proofGenerationInProgress,
+                        !ageProofUiState.proofGenerationInProgress &&
+                        !ageProofUiState.proofVerificationInProgress,
             ) {
                 Text("Share Proof")
             }
@@ -220,12 +224,12 @@ fun ProveScreen(
                             trackColor = MaterialTheme.colorScheme.surfaceVariant,
                         )
                     } else if (ageProofUiState.proofGenerated) {
-                        if (ageProofUiState.proof != null) {
-                            if (ageProofUiState.proof.success) {
+                        if (ageProofUiState.generatedProof != null) {
+                            if (ageProofUiState.generatedProof.success) {
                                 Text("Proof generated in ${ageProofUiState.proofGenerationTime.inWholeSeconds} sec")
                             } else {
                                 Text("Proof generation failed", color = Color.Red)
-                                Text("Reason: ${ageProofUiState.proof.message}")
+                                Text("Reason: ${ageProofUiState.generatedProof.message}")
                             }
                         }
                     }

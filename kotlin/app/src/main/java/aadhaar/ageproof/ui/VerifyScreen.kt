@@ -1,6 +1,11 @@
 package aadhaar.ageproof.ui
 
 import aadhaar.ageproof.data.AgeProofUiState
+import aadhaar.ageproof.data.JsonAadhaarAgeProof
+import aadhaar.ageproof.data.convertJsonAadhaarAgeProof
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,11 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.google.gson.Gson
+import uniffi.ageproof.AadhaarAgeProof
+import java.io.IOException
+
 
 @Composable
 fun VerifyScreen(
     ageProofUiState: AgeProofUiState,
+    setProof: (AadhaarAgeProof?) -> Unit,
+    resetReceivedProof: () -> Unit,
     verifyProof: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -27,22 +39,49 @@ fun VerifyScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier.fillMaxWidth(),
     ) {
-//        Button(
-//            onClick = {
-//                imageFileChooserLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-//            },
-//            enabled = !(ageProofUiState.proofGenerationInProgress || ageProofUiState.proofVerificationInProgress),
-//        ) {
-//            Text("Select proof file")
-//        }
-//        Text("or")
+        val context = LocalContext.current
+        val proofFileChooserLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+            onResult = { uri: Uri? ->
+                if (uri != null) {
+                    try {
+                        val inputStream = context.contentResolver.openInputStream(uri)
+                        val size = inputStream?.available()
+                        val buffer = ByteArray(size ?: 0)
+                        inputStream?.read(buffer)
+                        inputStream?.close()
+
+                        val json = buffer.toString(Charsets.UTF_8)
+                        val gson = Gson()
+                        val jsonProof = gson.fromJson(json, JsonAadhaarAgeProof::class.java)
+                        val proof = convertJsonAadhaarAgeProof(jsonProof)
+                        setProof(proof)
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                } else {
+                    setProof(null)
+                }
+            }
+        )
+
+        Button(
+            onClick = {
+                resetReceivedProof()
+                proofFileChooserLauncher.launch(arrayOf("application/json"))
+            },
+            enabled = !ageProofUiState.proofGenerationInProgress &&
+                    !ageProofUiState.proofVerificationInProgress,
+        ) {
+            Text("Select proof file")
+        }
         Button(
             onClick = verifyProof,
             enabled = !ageProofUiState.proofGenerationInProgress &&
                     !ageProofUiState.proofVerificationInProgress &&
-                    ageProofUiState.proof != null,
+                    ageProofUiState.receivedProof != null,
         ) {
-            Text("Verify generated proof")
+            Text("Verify proof")
         }
 
         if (ageProofUiState.ppGenerated) {
