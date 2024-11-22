@@ -7,7 +7,7 @@ cargo install cargo-ndk
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
  
 # Build the dylib (macOS) or so (Linux)
-cargo build --profile=release-with-debug
+cargo build --release
  
 # Build the Android libraries in jniLibs
 cargo ndk -o ../kotlin/app/src/main/jniLibs \
@@ -16,8 +16,8 @@ cargo ndk -o ../kotlin/app/src/main/jniLibs \
         -t arm64-v8a \
         -t x86 \
         -t x86_64 \
-        build --profile=release-with-debug
+        build --release
  
 # Create Kotlin bindings
 # For macOS, change extension of libageproof to dylib
-cargo run --profile=release-with-debug --bin uniffi-bindgen generate --library ./target/release/libageproof.so --language kotlin --out-dir ../kotlin/app/src/main/java/aadhaar/ageproof/rust
+cargo run --release --bin uniffi-bindgen generate --library ./target/release/libageproof.so --language kotlin --out-dir ../kotlin/app/src/main/java/aadhaar/ageproof/rust
