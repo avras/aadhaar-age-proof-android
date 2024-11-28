@@ -41,6 +41,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/files_path" />
         </provider>
+        <profileable android:shell="true" />
     </application>
 
 </manifest>
